@@ -1,0 +1,47 @@
+# Зависимости и виртуальные окружения
+node_modules/
+.venv/
+venv/
+env/
+
+# Сборки и кэш
+dist/
+build/
+.next/
+.cache/
+__pycache__/
+
+# Логи и временные файлы
+*.log
+*.tmp
+*.temp
+
+# Секретные данные и ключи (важно для безопасности!)
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+
+# Бинарные и тяжелые файлы данных
+*.zip
+*.tar.gz
+*.exe
+*.pdf
+*.sqlite3
+*.db
+data/raw/
+
+# Исключены из индексации ИИ (Источник: documentation/project-structure-v1-0.md, раздел 3)
+/legacy/
+/old-skills/
+
+# Картинки и бинарники диаграмм не используются для актуализации.
+/diagrams/**/*.png
+/diagrams/**/*.jpg
+/diagrams/**/*.jpeg
+/diagrams/**/*.gif
+/diagrams/**/*.webp
+/diagrams/**/*.bmp
+/diagrams/**/*.pdf
+/diagrams/**/*.svg

@@ -1,0 +1,28 @@
+# Python (оригинальный код программы сохраняется, блокируется только кэш)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Секретные данные и ключи
+.env
+.env.*
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Excel / CSV (раскомментируйте при необходимости)
+# *.xlsx
+# *.csv
+
+# Операционная система
+.DS_Store
+Thumbs.db
+
+# Настройки IDE и редакторов
+.vscode/
+.idea/
+
+# Устаревшие компоненты (Источник: documentation/project-structure-v1-0.md, раздел 3)
+/legacy/
+/old-skills/
