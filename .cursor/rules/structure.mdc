@@ -7,7 +7,7 @@ alwaysApply: true
 ## 1. Структура папок и файлов проекта (Cursor)
 
 * `documentation` — файлы ТЗ и материалы разработчика по проекта.
-* `requirements` - файлы `ft.md`, `nft.md`, `glossary.md`, `domain-model.md`, папки `user-stories` и `use-cases`.
+* `requirements` - файлы `functional-requirements.md`, `non-functional-requirements.md`, `glossary.md`, `domain-model.md`, папки `user-stories` и `use-cases`.
 * `diagrams` — архитектурные и логические диаграммы (PlantUML / Mermaid / BPMN).
 * `.cursor/skills` — промпты и инструкции для AI. 
 * `.cursor/rules` — правила для AI. 

@@ -5,3 +5,4 @@
 | Команда | Файл | Назначение |
 | --- | --- | --- |
 | `/pin-memory` | `.cursor/commands/pin-memory.md` | Быстро сохранить устойчивый вывод из чата в `reports/agent-memory.md` |
+| `/ft` | `.cursor/commands/ft.md` | Написать или обновить функциональные требования по `.cursor/skills/skill-ft.md` |

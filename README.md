@@ -8,8 +8,8 @@
 
 Исходные требования лежат в `documentation/`:
 
-- `documentation/specification-sea-battle-v1-0.md` — техническое задание (правила игры, ИИ, стек).
-- `documentation/project-structure-v1-0.md .md` — структура папок и правила именования файлов.
+- `documentation/specification-sea-battle-v1-1.md` — техническое задание (правила игры, ИИ, стек, языки).
+- `documentation/project-structure-v1-1.md .md` — структура папок и правила именования файлов.
 
 Это источники правды для старта проекта. Производные артефакты (требования, диаграммы, код) появляются в папках ниже.
 
@@ -18,7 +18,7 @@
 | Папка | Назначение | Коммит / репозиторий | Индексация ИИ |
 | --- | --- | --- | --- |
 | `documentation` | ТЗ и материалы разработчика | да | да |
-| `requirements` | `ft.md`, `nft.md`, `glossary.md`, `domain-model.md`, папки `user-stories` и `use-cases` | да | да |
+| `requirements` | `functional-requirements.md`, `non-functional-requirements.md`, `glossary.md`, `domain-model.md`, папки `user-stories` и `use-cases` | да | да |
 | `diagrams` | текстовые диаграммы (PlantUML / Mermaid / BPMN) | да (текст) | да (текст; картинки и бинарники — нет) |
 | `.cursor/skills` | промпты и инструкции для AI | да | да |
 | `.cursor/rules` | правила для AI | да | да |

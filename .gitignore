@@ -23,6 +23,6 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Устаревшие компоненты (Источник: documentation/project-structure-v1-0.md, раздел 3)
+# Устаревшие компоненты (Источник: documentation/project-structure-v1-1.md, раздел 3)
 /legacy/
 /old-skills/

@@ -32,7 +32,7 @@ credentials.json
 *.db
 data/raw/
 
-# Исключены из индексации ИИ (Источник: documentation/project-structure-v1-0.md, раздел 3)
+# Исключены из индексации ИИ (Источник: documentation/project-structure-v1-1.md, раздел 3)
 /legacy/
 /old-skills/
 
