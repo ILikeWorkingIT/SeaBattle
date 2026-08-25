@@ -81,7 +81,7 @@ flowchart LR
 | Session | turn | Side (Enum) | Да | `Player` или `Backend`; при старте `Player` | Право хода (не путать с `Shot.seq`) |
 | Session | winner | Side (Enum) | Нет | Только при `GameOver`; при сдаче всегда `Backend` | FT-026, FT-077 |
 | Session | endReason | EndReason (Enum) | Нет | Только `FleetLost` или `Surrender` вместе с `GameOver` | TTL и `SESSION_ABORTED` сюда не входят |
-| Session | ttlAnchor | Метка времени | Да | Меняется только при создании и при **принятом** выстреле; хранение в UTC, JSON — в API (A0150) | FT-005 |
+| Session | ttlAnchor | Метка времени | Да | Меняется только при создании и при **принятом** выстреле; хранение в UTC, JSON — ISO-8601 (A0150, A0158) | FT-005 |
 | Session | idleTtl | IdleTtl (VO) | Да | Ровно 30 минут | Возобновление, язык, статистика не сдвигают |
 | Session | connected | Логический | Да | Не более одного активного соединения | Reconnect того же запуска замещает соединение (A0133); второй экземпляр — отказ (FT-068) |
 | Session | playerBoard | Board (Entity) | Да | Ровно одно | Поле Игрока |
@@ -283,7 +283,7 @@ flowchart LR
 | Record | shots | Целое | Да | ≥ 0; сдача при нуле выстрелов допустима | Для среднего; ход = один выстрел |
 | Record | endReason | EndReason (Enum) | Да | Только `FleetLost` или `Surrender` | Не TTL, не abort |
 
-Точный JSON и округление среднего — отложены (A0134); среднее — производная величина.
+JSON снимка статистики и `avgShots` — A0159; среднее — производная величина.
 
 #### 2. Объекты-Значения (Value Objects)
 

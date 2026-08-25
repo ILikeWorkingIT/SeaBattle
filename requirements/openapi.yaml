@@ -5,28 +5,47 @@ info:
   description: |
     HTTP/REST and WebSocket contract for the Sea Battle MVP (player vs backend PvE).
 
-    **Channels (NFT-004, A0018, A0130):**
+    Status of this file: agreed 2026-08-25 (A0154–A0160).
+
+    **Channels (NFT-004, A0018, A0130, FT-077):**
     * REST — create a session (including player fleet generation) and read global statistics.
     * WebSocket — player shots, surrender, turn/state notifications, resume snapshot.
 
-    **Not in this API:** UI language (frontend-only, A0091 / UC-008), heatmap, and backend
-    fleet occupancy until cells become `HIT` or `SUNK` (FT-015, FT-050, NFT-009).
+    **WebSocket frames (in this contract, not omitted):**
+    * Client → server: `shot`, `surrender`.
+    * Server → client: `sessionSnapshot`, `shotResolved`, `gameOver`, `sessionAborted`,
+      `ttlExpired`, `error`.
+    OpenAPI 3.0.3 has no native WebSocket frames. `GET /sessions/{sessionId}/ws` is the
+    HTTP upgrade. Message schemas live under `components.schemas` and on that operation
+    via the vendor extension `x-websocket`.
+
+    **Omitted from this API (not in the contract at all):**
+    * UI language and localization keys (frontend-only, A0091 / UC-008 / A0137).
+    * Heatmap, Hunt/Target, and backend fleet occupancy until cells are `HIT` or `SUNK`
+      (FT-015, FT-050, NFT-009).
+    * Login, player account, PvP, manual placement, resume after app restart,
+      screen to type session id (post-MVP / A0016, A0093).
+    * Display letters/glyphs (FT-008 / A0099 are UI; storage uses column/row).
 
     Session access uses `sessionId` as a capability secret (no login in MVP).
     `sessionId` is 32 hex characters (128 bits), not UUID v4 (NFT-017, A0149).
+    Field names are camelCase (A0139). Protocol codes `MISS` / `HIT` / `SUNK` /
+    `GAME_OVER` / `SESSION_ABORTED` / `SHOT_WRONG_CHANNEL` are from FR/`Axxxx`.
 
-    Field names are camelCase. Protocol codes `MISS` / `HIT` / `SUNK` / `GAME_OVER` /
-    `SESSION_ABORTED` / `SHOT_WRONG_CHANNEL` are unchanged.
+    `servers.url` is the future API server (FastAPI / Uvicorn per the specification,
+    A0160). It is not the documentation viewer. Try it out will not connect until
+    the backend listens on that URL.
 
-    WebSocket frames are not native in OpenAPI 3.0.3. `GET /sessions/{sessionId}/ws`
-    is the HTTP upgrade. Message schemas live under `components.schemas` and are
-    listed on that operation via `x-websocket`.
+    **Closed API decisions:** A0154 (paths), A0155 (no create body), A0156 (HTTP
+    statuses), A0157 (error codes and `message` / `messageRu`), A0158 (time/TTL JSON),
+    A0159 (`avgShots` JSON number, no extra rounding).
+
   contact:
     name: Sea Battle
 
 servers:
   - url: http://localhost:8000
-    description: Local MVP backend (FastAPI / Uvicorn)
+    description: Local MVP backend (FastAPI / Uvicorn, A0160). Not the Swagger/ReDoc process.
 
 security: []
 
@@ -53,27 +72,11 @@ paths:
         heatmap are not included.
 
         Idle TTL (30 minutes) starts at successful creation (`ttlAnchor`).
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateSessionRequest'
-            examples:
-              pve:
-                summary: Start a PvE match
-                value:
-                  mode: PvE
+
+        No request body; PvE is implicit (FT-043, A0155). HTTP statuses: A0156.
       responses:
         '201':
           description: Session created; player fleet issued; slot occupied
-          headers:
-            Location:
-              description: URL of the party WebSocket for this session
-              schema:
-                type: string
-                format: uri
-              example: /sessions/a1b2c3d4e5f6789012345678abcdef01/ws
           content:
             application/json:
               schema:
@@ -82,7 +85,9 @@ paths:
                 created:
                   $ref: '#/components/examples/SessionCreatedExample'
         '400':
-          description: Malformed body or invalid types (UC-001 alt. 5.1)
+          description: |
+            Malformed payload if the client sent a body (UC-001 alt. 5.1).
+            Not used when the request has no body.
           content:
             application/json:
               schema:
@@ -124,7 +129,7 @@ paths:
       operationId: getStatistics
       summary: Get global server statistics
       description: |
-        UC-007, FT-038…FT-042, FT-056.
+        UC-007, FT-038, FT-039, FT-040, FT-041, FT-042, FT-056.
 
         Returns aggregates over completed-game records only (`GAME_OVER`).
         Allowed during an active match. Does **not** shift idle TTL and does not
@@ -151,17 +156,8 @@ paths:
                     playerWins: 6
                     backendWins: 4
                     avgShots: 47.3
-        '400':
-          description: Request does not match the statistics contract (wrong path/type)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                validation:
-                  $ref: '#/components/examples/ErrorValidation'
         '500':
-          description: Failed to read a consistent ledger snapshot
+          description: Failed to read a consistent ledger snapshot (UC-007 E1)
           content:
             application/json:
               schema:
@@ -178,8 +174,9 @@ paths:
       description: |
         FT-055, A0089. Player shots are accepted only on the party WebSocket.
 
-        This HTTP operation always fails without changing match state.
-        Send `{ "type": "shot", "column": n, "row": n }` on
+        This HTTP operation always fails without changing match state and without
+        revealing whether the session exists (A0001). Canonical outcome is 4xx
+        `SHOT_WRONG_CHANNEL`. Send `{ "type": "shot", "column": n, "row": n }` on
         `GET /sessions/{sessionId}/ws` instead (UC-002).
       parameters:
         - $ref: '#/components/parameters/SessionId'
@@ -197,10 +194,8 @@ paths:
                   column: 0
                   row: 2
       responses:
-        '200':
-          description: Not returned. REST never accepts a player shot (FT-055).
         '400':
-          description: "Shot rejected — wrong channel (SHOT_WRONG_CHANNEL)"
+          description: Shot rejected — wrong channel (`SHOT_WRONG_CHANNEL`)
           content:
             application/json:
               schema:
@@ -208,17 +203,6 @@ paths:
               examples:
                 wrongChannel:
                   $ref: '#/components/examples/ErrorShotWrongChannel'
-                validation:
-                  $ref: '#/components/examples/ErrorValidation'
-        '404':
-          description: Session id unknown or no longer available (FT-067); no session state in the body
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                unavailable:
-                  $ref: '#/components/examples/ErrorSessionUnavailable'
         '500':
           description: Internal error; match state unchanged
           content:
@@ -237,7 +221,9 @@ paths:
       description: |
         FT-077, A0130. Surrender is accepted only on the party WebSocket.
 
-        This HTTP operation always fails without changing match state.
+        This HTTP operation always fails without changing match state and without
+        revealing whether the session exists (A0001). Canonical outcome is 4xx.
+        Code `SURRENDER_WRONG_CHANNEL` (A0157).
         Send `{ "type": "surrender" }` on `GET /sessions/{sessionId}/ws` instead (UC-005).
       parameters:
         - $ref: '#/components/parameters/SessionId'
@@ -253,10 +239,8 @@ paths:
                 value:
                   type: surrender
       responses:
-        '200':
-          description: Not returned. REST never accepts surrender (FT-077, A0130).
         '400':
-          description: "Surrender rejected — wrong channel (SURRENDER_WRONG_CHANNEL)"
+          description: Surrender rejected — wrong channel (`SURRENDER_WRONG_CHANNEL`, A0157)
           content:
             application/json:
               schema:
@@ -264,17 +248,6 @@ paths:
               examples:
                 wrongChannel:
                   $ref: '#/components/examples/ErrorSurrenderWrongChannel'
-                validation:
-                  $ref: '#/components/examples/ErrorValidation'
-        '404':
-          description: Session id unknown or no longer available (FT-067); no session state in the body
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                unavailable:
-                  $ref: '#/components/examples/ErrorSessionUnavailable'
         '500':
           description: Internal error; match state unchanged
           content:
@@ -294,7 +267,8 @@ paths:
         UC-002, UC-003, UC-004, UC-005, UC-006; FT-017, FT-036, FT-054, FT-055,
         FT-066, FT-068, FT-076, FT-077.
 
-        HTTP GET with `Upgrade: websocket`. After `101 Switching Protocols`:
+        HTTP GET with `Upgrade: websocket`. Canonical success is `101 Switching
+        Protocols` (not a REST 2xx body of frames). After upgrade:
 
         1. Server sends `sessionSnapshot` (resume / first sync). Resume itself does
            not shift idle TTL (FT-005).
@@ -309,7 +283,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/SessionId'
       x-websocket:
-        subprotocol: sea-battle.party.v1
         clientMessages:
           - $ref: '#/components/schemas/ShotCommand'
           - $ref: '#/components/schemas/SurrenderCommand'
@@ -334,37 +307,11 @@ paths:
       responses:
         '101':
           description: Switching Protocols — party channel open; first frame is sessionSnapshot
-        '200':
-          description: |
-            Documented so HTTP clients see a 2xx outcome. A successful upgrade is
-            101 Switching Protocols; some proxies surface 200. After the handshake,
-            frames follow ServerMessage (first frame is sessionSnapshot).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServerMessage'
-              examples:
-                shotMiss:
-                  $ref: '#/components/examples/ShotMissExample'
-                shotSunk:
-                  $ref: '#/components/examples/ShotSunkExample'
-                gameOver:
-                  $ref: '#/components/examples/GameOverFleetLostExample'
-                sessionAborted:
-                  $ref: '#/components/examples/SessionAbortedExample'
-                errorNotYourTurn:
-                  $ref: '#/components/examples/WsErrorNotYourTurn'
-        '400':
-          description: Malformed upgrade or invalid session id format
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                validation:
-                  $ref: '#/components/examples/ErrorValidation'
         '404':
-          description: Session unavailable (unknown, TTL, aborted, or already deleted after GAME_OVER)
+          description: |
+            Unified session-unavailable refusal (FT-067, A0001, A0097): unknown id,
+            expired TTL, aborted, deleted after GAME_OVER, or unusable id format.
+            Reasons are not distinguished for the frontend.
           content:
             application/json:
               schema:
@@ -390,15 +337,6 @@ paths:
               examples:
                 internal:
                   $ref: '#/components/examples/ErrorInternal'
-        '503':
-          description: Backend temporarily cannot accept the channel
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                startFailed:
-                  $ref: '#/components/examples/ErrorInternal'
 
 components:
   parameters:
@@ -406,7 +344,7 @@ components:
       name: sessionId
       in: path
       required: true
-      description: Game session capability id (32 hex characters)
+      description: Game session capability id (32 hex characters, A0149)
       schema:
         $ref: '#/components/schemas/GameSessionId'
       example: a1b2c3d4e5f6789012345678abcdef01
@@ -414,7 +352,7 @@ components:
   schemas:
     GameSessionId:
       type: string
-      description: Opaque 128-bit session id; not UUID v4
+      description: Opaque 128-bit session id; not UUID v4 (A0149, NFT-017)
       minLength: 32
       maxLength: 32
       pattern: '^[0-9a-fA-F]{32}$'
@@ -422,9 +360,7 @@ components:
 
     ShipId:
       type: string
-      description: Unique within one session; format is implementation-defined
-      minLength: 1
-      maxLength: 64
+      description: Unique within one session; format is not fixed in sources (A0149)
       example: ship01
 
     GameMode:
@@ -472,6 +408,9 @@ components:
 
     ErrorCode:
       type: string
+      description: |
+        `SHOT_WRONG_CHANNEL` (A0089) and `SESSION_ABORTED` (A0106) are from FR/`Axxxx`.
+        Remaining literals: A0157.
       enum:
         - VALIDATION_ERROR
         - SESSION_LIMIT_REACHED
@@ -507,21 +446,14 @@ components:
           description: Short Russian text; no generation internals
           example: Нет свободного слота сессии.
 
-    CreateSessionRequest:
-      type: object
-      additionalProperties: false
-      required: [mode]
-      properties:
-        mode:
-          $ref: '#/components/schemas/GameMode'
-
     CellCoordinate:
       type: object
       additionalProperties: false
-      required: [column, row, code]
+      required: [column, row]
       description: |
-        API and storage use indices [0..9, 0..9]. `code` is the two-digit
-        column-row string (FT-063); A3/А3 → `02`. Not stored separately from column/row.
+        API uses indices [0..9, 0..9] (FT-007). `code` is the two-digit column-row
+        string (FT-063); A3/А3 → `02`. Derived; clients must not send `code` instead
+        of column/row on shot commands.
       properties:
         column:
           type: integer
@@ -535,21 +467,19 @@ components:
           example: 2
         code:
           type: string
-          pattern: '^[0-9]{2}$'
-          minLength: 2
-          maxLength: 2
+          description: Derived two-digit code; optional on the wire when column/row are present
           example: '02'
 
     Occupancy:
       type: object
       additionalProperties: false
       required: [kind]
+      description: ship is present when kind is Deck and absent when Empty
       properties:
         kind:
           $ref: '#/components/schemas/OccupancyKind'
         ship:
           $ref: '#/components/schemas/ShipId'
-      description: "ship is required when kind is Deck and must be absent when Empty"
 
     BoardCellPrivate:
       type: object
@@ -632,8 +562,6 @@ components:
           $ref: '#/components/schemas/ShipType'
         length:
           type: integer
-          minimum: 1
-          maximum: 4
           description: Must match type (Battleship 4, Cruiser 3, Destroyer 2, Boat 1)
         facing:
           $ref: '#/components/schemas/Facing'
@@ -641,8 +569,6 @@ components:
           $ref: '#/components/schemas/ShipStatus'
         decks:
           type: array
-          minItems: 1
-          maxItems: 4
           items:
             $ref: '#/components/schemas/Deck'
 
@@ -705,8 +631,8 @@ components:
         - shots
       description: |
         Operational view for the frontend. `backendFleet` and heatmap are never sent.
-        `winner` and `endReason` appear only when status is GameOver (rare on REST
-        create; possible on a snapshot if GAME_OVER was just applied before delete).
+        `winner` and `endReason` appear only when status is GameOver.
+        `idleTtlSeconds` / `remainTtlSeconds` / `ttlAnchor` serialization — A0158.
       properties:
         sessionId:
           $ref: '#/components/schemas/GameSessionId'
@@ -723,16 +649,15 @@ components:
         ttlAnchor:
           type: string
           format: date-time
-          description: UTC instant (ISO-8601 with Z). Shifts only on create and accepted shot.
+          description: UTC instant (ISO-8601). Shifts only on create and accepted shot (A0158).
           example: '2026-08-25T15:00:00.000Z'
         idleTtlSeconds:
           type: integer
           enum: [1800]
-          description: Idle TTL length; always 30 minutes
+          description: Idle TTL length; always 30 minutes (FT-005), serialized as seconds (A0158)
         remainTtlSeconds:
           type: integer
           minimum: 0
-          maximum: 1800
           description: Remaining idle TTL at response time (FT-080); UI may format freely
         playerBoard:
           $ref: '#/components/schemas/PlayerBoard'
@@ -752,8 +677,8 @@ components:
       description: |
         Derived from ledger records at read time.
         Invariant: playerWins + backendWins = games.
-        avgShots is the mean of Record.shots, rounded to 2 decimal places
-        (half away from zero). When games is 0, avgShots is 0.
+        avgShots is the mean of Record.shots. When games is 0, avgShots is 0.
+        JSON number without extra rounding (A0159); display rounding is on the frontend.
       properties:
         games:
           type: integer
@@ -767,7 +692,6 @@ components:
         avgShots:
           type: number
           minimum: 0
-          multipleOf: 0.01
           example: 47.3
 
     ShotCommand:
@@ -792,7 +716,7 @@ components:
       type: object
       additionalProperties: false
       required: [type]
-      description: Client → server WebSocket frame (UC-005)
+      description: Client to server WebSocket frame (UC-005)
       properties:
         type:
           type: string
@@ -849,7 +773,6 @@ components:
         remainTtlSeconds:
           type: integer
           minimum: 0
-          maximum: 1800
 
     GameOverEvent:
       type: object
@@ -913,24 +836,6 @@ components:
           type: string
         messageRu:
           type: string
-
-    ServerMessage:
-      oneOf:
-        - $ref: '#/components/schemas/SessionSnapshotEvent'
-        - $ref: '#/components/schemas/ShotResolvedEvent'
-        - $ref: '#/components/schemas/GameOverEvent'
-        - $ref: '#/components/schemas/SessionAbortedEvent'
-        - $ref: '#/components/schemas/TtlExpiredEvent'
-        - $ref: '#/components/schemas/ErrorEvent'
-      discriminator:
-        propertyName: type
-        mapping:
-          sessionSnapshot: '#/components/schemas/SessionSnapshotEvent'
-          shotResolved: '#/components/schemas/ShotResolvedEvent'
-          gameOver: '#/components/schemas/GameOverEvent'
-          sessionAborted: '#/components/schemas/SessionAbortedEvent'
-          ttlExpired: '#/components/schemas/TtlExpiredEvent'
-          error: '#/components/schemas/ErrorEvent'
 
   examples:
     ErrorValidation:
