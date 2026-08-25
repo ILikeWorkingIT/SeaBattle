@@ -111,7 +111,7 @@ Use Cases (Cockburn) этого проекта — через `/uc` (скилл 
 `.cursor/rules/rule-answers-project.mdc`. В «Источнике» требований — `Axxxx`, не «решение заказчика».
 `Axxxx` важнее предварительного ТЗ при конфликте; не путать с `MR-01`…`MR-07` (правила измерения НФТ).
 Детали согласования ФТ/НФТ/QC — в скиллах `/ft`, `/nft`, `/qc-ft-nft`.
-Детали Use Cases — в скилле `/uc` (`skill-uc`).
+Детали User Stories — в скилле `/us` (`skill-us`); Use Cases — в скилле `/uc` (`skill-uc`); контроль качества US/UC — `/qc-us-uc` (`skill-quality-control-us-uc`).
 
 ## 7. Правила работы с файлами
 

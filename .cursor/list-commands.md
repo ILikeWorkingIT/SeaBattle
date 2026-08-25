@@ -10,3 +10,4 @@
 | `/us` | `.cursor/commands/us.md` | Написать или обновить User Stories, роли и права по `.cursor/skills/skill-us.md` |
 | `/uc` | `.cursor/commands/uc.md` | Написать или обновить Use Cases (Cockburn) по `.cursor/skills/skill-uc.md` |
 | `/qc-ft-nft` | `.cursor/commands/qc-ft-nft.md` | Проверить качество ФТ и НФТ по `.cursor/skills/skill-quality-control-ft-nft.md` |
+| `/qc-us-uc` | `.cursor/commands/qc-us-uc.md` | Проверить качество US и UC по `.cursor/skills/skill-quality-control-us-uc.md` |
