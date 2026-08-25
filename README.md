@@ -19,6 +19,26 @@ python -m frontend
 
 Заголовок окна: **Sea Battle — PvE**. Нужны Python 3.12+ и `PySide6` (`pip install -r src/frontend/requirements.txt`).
 
+## Как открыть документацию API
+
+Контракт: `requirements/openapi.yaml` (OpenAPI 3.0.3). Это спецификация, не работающий бэкенд.
+
+`servers.url` `http://localhost:8000` — будущий FastAPI / Uvicorn. Сейчас этот порт не слушает API: Try it out в Swagger будет с ошибкой соединения.
+
+Просмотр документации (обычный Chrome или Edge, не Simple Browser Cursor):
+
+- Swagger UI: http://127.0.0.1:8080/
+- ReDoc: http://127.0.0.1:8081/
+
+Если просмотрщики ещё не запущены: в проводнике откройте `requirements` и дважды щёлкните `run-openapi-docs.bat`. Если 8080 или 8081 заняты, скрипт берёт следующие свободные порты и печатает фактические URL в окне консоли.
+
+Запасной способ — обычный PowerShell (не терминал агента в чате):
+
+```powershell
+cd e:\Cursor\SeaBattle\requirements
+python preview-openapi.py
+```
+
 ## Входные документы
 
 - `documentation/specification-sea-battle-v1-1.md` — техническое задание (правила игры, ИИ, стек, языки).

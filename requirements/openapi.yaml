@@ -1,0 +1,1681 @@
+openapi: 3.0.3
+info:
+  title: Sea Battle API
+  version: 1.0.0
+  description: |
+    HTTP/REST and WebSocket contract for the Sea Battle MVP (player vs backend PvE).
+
+    **Channels (NFT-004, A0018, A0130):**
+    * REST — create a session (including player fleet generation) and read global statistics.
+    * WebSocket — player shots, surrender, turn/state notifications, resume snapshot.
+
+    **Not in this API:** UI language (frontend-only, A0091 / UC-008), heatmap, and backend
+    fleet occupancy until cells become `HIT` or `SUNK` (FT-015, FT-050, NFT-009).
+
+    Session access uses `sessionId` as a capability secret (no login in MVP).
+    `sessionId` is 32 hex characters (128 bits), not UUID v4 (NFT-017, A0149).
+
+    Field names are camelCase. Protocol codes `MISS` / `HIT` / `SUNK` / `GAME_OVER` /
+    `SESSION_ABORTED` / `SHOT_WRONG_CHANNEL` are unchanged.
+
+    WebSocket frames are not native in OpenAPI 3.0.3. `GET /sessions/{sessionId}/ws`
+    is the HTTP upgrade. Message schemas live under `components.schemas` and are
+    listed on that operation via `x-websocket`.
+  contact:
+    name: Sea Battle
+
+servers:
+  - url: http://localhost:8000
+    description: Local MVP backend (FastAPI / Uvicorn)
+
+security: []
+
+tags:
+  - name: Sessions
+    description: Create a PvE session and reject party mutations sent over REST
+  - name: Statistics
+    description: Global server aggregates (not per player)
+  - name: Real-time
+    description: WebSocket party channel (shots, surrender, state events)
+
+paths:
+  /sessions:
+    post:
+      tags: [Sessions]
+      operationId: createSession
+      summary: Create a PvE game session and return the player's fleet
+      description: |
+        UC-001, FT-001, FT-010, FT-014, FT-043, FT-049.
+
+        Creates an independent PvE session, generates both fleets, deals the **player**
+        placement, and gives the player the first turn. The active-session slot
+        (max 3) is taken only after this response is produced. Backend occupancy and
+        heatmap are not included.
+
+        Idle TTL (30 minutes) starts at successful creation (`ttlAnchor`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+            examples:
+              pve:
+                summary: Start a PvE match
+                value:
+                  mode: PvE
+      responses:
+        '201':
+          description: Session created; player fleet issued; slot occupied
+          headers:
+            Location:
+              description: URL of the party WebSocket for this session
+              schema:
+                type: string
+                format: uri
+              example: /sessions/a1b2c3d4e5f6789012345678abcdef01/ws
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionState'
+              examples:
+                created:
+                  $ref: '#/components/examples/SessionCreatedExample'
+        '400':
+          description: Malformed body or invalid types (UC-001 alt. 5.1)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation:
+                  $ref: '#/components/examples/ErrorValidation'
+        '409':
+          description: Three active sessions already exist (FT-049)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                limit:
+                  $ref: '#/components/examples/ErrorSessionLimit'
+        '500':
+          description: Internal error after generation; session is not kept (no slot)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                internal:
+                  $ref: '#/components/examples/ErrorInternal'
+        '503':
+          description: No valid placement within the start window (FT-010 / NFT-015)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                startFailed:
+                  $ref: '#/components/examples/ErrorSessionStartFailed'
+
+  /statistics:
+    get:
+      tags: [Statistics]
+      operationId: getStatistics
+      summary: Get global server statistics
+      description: |
+        UC-007, FT-038…FT-042, FT-056.
+
+        Returns aggregates over completed-game records only (`GAME_OVER`).
+        Allowed during an active match. Does **not** shift idle TTL and does not
+        change any session. Abandoned / TTL / `SESSION_ABORTED` games are excluded.
+      responses:
+        '200':
+          description: Snapshot of global counters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatisticsSnapshot'
+              examples:
+                empty:
+                  summary: No completed games yet
+                  value:
+                    games: 0
+                    playerWins: 0
+                    backendWins: 0
+                    avgShots: 0
+                populated:
+                  summary: Several completed games
+                  value:
+                    games: 10
+                    playerWins: 6
+                    backendWins: 4
+                    avgShots: 47.3
+        '400':
+          description: Request does not match the statistics contract (wrong path/type)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation:
+                  $ref: '#/components/examples/ErrorValidation'
+        '500':
+          description: Failed to read a consistent ledger snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                internal:
+                  $ref: '#/components/examples/ErrorInternal'
+
+  /sessions/{sessionId}/shots:
+    post:
+      tags: [Sessions]
+      operationId: rejectShotOverRest
+      summary: Reject a player shot sent over REST
+      description: |
+        FT-055, A0089. Player shots are accepted only on the party WebSocket.
+
+        This HTTP operation always fails without changing match state.
+        Send `{ "type": "shot", "column": n, "row": n }` on
+        `GET /sessions/{sessionId}/ws` instead (UC-002).
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShotCommand'
+            examples:
+              shot:
+                summary: Payload that belongs on WebSocket
+                value:
+                  type: shot
+                  column: 0
+                  row: 2
+      responses:
+        '200':
+          description: Not returned. REST never accepts a player shot (FT-055).
+        '400':
+          description: "Shot rejected — wrong channel (SHOT_WRONG_CHANNEL)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                wrongChannel:
+                  $ref: '#/components/examples/ErrorShotWrongChannel'
+                validation:
+                  $ref: '#/components/examples/ErrorValidation'
+        '404':
+          description: Session id unknown or no longer available (FT-067); no session state in the body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unavailable:
+                  $ref: '#/components/examples/ErrorSessionUnavailable'
+        '500':
+          description: Internal error; match state unchanged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                internal:
+                  $ref: '#/components/examples/ErrorInternal'
+
+  /sessions/{sessionId}/surrender:
+    post:
+      tags: [Sessions]
+      operationId: rejectSurrenderOverRest
+      summary: Reject a surrender sent over REST
+      description: |
+        FT-077, A0130. Surrender is accepted only on the party WebSocket.
+
+        This HTTP operation always fails without changing match state.
+        Send `{ "type": "surrender" }` on `GET /sessions/{sessionId}/ws` instead (UC-005).
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SurrenderCommand'
+            examples:
+              surrender:
+                summary: Payload that belongs on WebSocket
+                value:
+                  type: surrender
+      responses:
+        '200':
+          description: Not returned. REST never accepts surrender (FT-077, A0130).
+        '400':
+          description: "Surrender rejected — wrong channel (SURRENDER_WRONG_CHANNEL)"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                wrongChannel:
+                  $ref: '#/components/examples/ErrorSurrenderWrongChannel'
+                validation:
+                  $ref: '#/components/examples/ErrorValidation'
+        '404':
+          description: Session id unknown or no longer available (FT-067); no session state in the body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unavailable:
+                  $ref: '#/components/examples/ErrorSessionUnavailable'
+        '500':
+          description: Internal error; match state unchanged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                internal:
+                  $ref: '#/components/examples/ErrorInternal'
+
+  /sessions/{sessionId}/ws:
+    get:
+      tags: [Real-time]
+      operationId: openPartyChannel
+      summary: Open the real-time party channel (WebSocket upgrade)
+      description: |
+        UC-002, UC-003, UC-004, UC-005, UC-006; FT-017, FT-036, FT-054, FT-055,
+        FT-066, FT-068, FT-076, FT-077.
+
+        HTTP GET with `Upgrade: websocket`. After `101 Switching Protocols`:
+
+        1. Server sends `sessionSnapshot` (resume / first sync). Resume itself does
+           not shift idle TTL (FT-005).
+        2. Client may send `shot` or `surrender`.
+        3. Server sends `shotResolved`, optional separate `gameOver` (A0005),
+           `sessionAborted`, `ttlExpired`, or `error`.
+        4. Delivery of backend shots is at-least-once; apply by `seq` (A0127, A0141).
+        5. A second distinct frontend is rejected (FT-068). Reconnect of the same
+           launch replaces the previous socket (A0133) and is resume, not a second client.
+
+        Message schemas: `x-websocket` on this operation and `components.schemas`.
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      x-websocket:
+        subprotocol: sea-battle.party.v1
+        clientMessages:
+          - $ref: '#/components/schemas/ShotCommand'
+          - $ref: '#/components/schemas/SurrenderCommand'
+        serverMessages:
+          - $ref: '#/components/schemas/SessionSnapshotEvent'
+          - $ref: '#/components/schemas/ShotResolvedEvent'
+          - $ref: '#/components/schemas/GameOverEvent'
+          - $ref: '#/components/schemas/SessionAbortedEvent'
+          - $ref: '#/components/schemas/TtlExpiredEvent'
+          - $ref: '#/components/schemas/ErrorEvent'
+        examples:
+          shotMiss:
+            $ref: '#/components/examples/ShotMissExample'
+          shotSunk:
+            $ref: '#/components/examples/ShotSunkExample'
+          gameOver:
+            $ref: '#/components/examples/GameOverFleetLostExample'
+          sessionAborted:
+            $ref: '#/components/examples/SessionAbortedExample'
+          errorNotYourTurn:
+            $ref: '#/components/examples/WsErrorNotYourTurn'
+      responses:
+        '101':
+          description: Switching Protocols — party channel open; first frame is sessionSnapshot
+        '200':
+          description: |
+            Documented so HTTP clients see a 2xx outcome. A successful upgrade is
+            101 Switching Protocols; some proxies surface 200. After the handshake,
+            frames follow ServerMessage (first frame is sessionSnapshot).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerMessage'
+              examples:
+                shotMiss:
+                  $ref: '#/components/examples/ShotMissExample'
+                shotSunk:
+                  $ref: '#/components/examples/ShotSunkExample'
+                gameOver:
+                  $ref: '#/components/examples/GameOverFleetLostExample'
+                sessionAborted:
+                  $ref: '#/components/examples/SessionAbortedExample'
+                errorNotYourTurn:
+                  $ref: '#/components/examples/WsErrorNotYourTurn'
+        '400':
+          description: Malformed upgrade or invalid session id format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation:
+                  $ref: '#/components/examples/ErrorValidation'
+        '404':
+          description: Session unavailable (unknown, TTL, aborted, or already deleted after GAME_OVER)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unavailable:
+                  $ref: '#/components/examples/ErrorSessionUnavailable'
+        '409':
+          description: Another frontend already holds the live connection (FT-068)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                busy:
+                  $ref: '#/components/examples/ErrorSessionAlreadyConnected'
+        '500':
+          description: Internal error during upgrade
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                internal:
+                  $ref: '#/components/examples/ErrorInternal'
+        '503':
+          description: Backend temporarily cannot accept the channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                startFailed:
+                  $ref: '#/components/examples/ErrorInternal'
+
+components:
+  parameters:
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: Game session capability id (32 hex characters)
+      schema:
+        $ref: '#/components/schemas/GameSessionId'
+      example: a1b2c3d4e5f6789012345678abcdef01
+
+  schemas:
+    GameSessionId:
+      type: string
+      description: Opaque 128-bit session id; not UUID v4
+      minLength: 32
+      maxLength: 32
+      pattern: '^[0-9a-fA-F]{32}$'
+      example: a1b2c3d4e5f6789012345678abcdef01
+
+    ShipId:
+      type: string
+      description: Unique within one session; format is implementation-defined
+      minLength: 1
+      maxLength: 64
+      example: ship01
+
+    GameMode:
+      type: string
+      enum: [PvE]
+      description: Only PvE in MVP (FT-043)
+
+    SessionStatus:
+      type: string
+      enum: [Active, GameOver]
+
+    Side:
+      type: string
+      enum: [Player, Backend]
+
+    EndReason:
+      type: string
+      enum: [FleetLost, Surrender]
+      description: Set only with GAME_OVER; not used for TTL or SESSION_ABORTED
+
+    ShipType:
+      type: string
+      enum: [Battleship, Cruiser, Destroyer, Boat]
+
+    ShipStatus:
+      type: string
+      enum: [Intact, Wounded, Sunk]
+
+    Facing:
+      type: string
+      enum: [Horizontal, Vertical]
+
+    Mark:
+      type: string
+      enum: [Unchecked, MISS, HIT, SUNK]
+      description: Buffer cells around a sunk ship use MISS (no separate code)
+
+    ShotResult:
+      type: string
+      enum: [MISS, HIT, SUNK]
+
+    OccupancyKind:
+      type: string
+      enum: [Empty, Deck]
+
+    ErrorCode:
+      type: string
+      enum:
+        - VALIDATION_ERROR
+        - SESSION_LIMIT_REACHED
+        - SESSION_START_FAILED
+        - SESSION_UNAVAILABLE
+        - SESSION_ALREADY_CONNECTED
+        - SHOT_WRONG_CHANNEL
+        - SURRENDER_WRONG_CHANNEL
+        - SHOT_INVALID_PAYLOAD
+        - SHOT_OUT_OF_BOUNDS
+        - SHOT_CELL_CHECKED
+        - SHOT_NOT_YOUR_TURN
+        - SHOT_GAME_OVER
+        - SHOT_OWN_BOARD
+        - SHOT_DUPLICATE
+        - SHOT_NOT_STARTED
+        - SESSION_ABORTED
+        - INTERNAL_ERROR
+
+    Error:
+      type: object
+      additionalProperties: false
+      required: [code, message, messageRu]
+      properties:
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+          description: Short English text; no generation internals
+          example: No free session slot.
+        messageRu:
+          type: string
+          description: Short Russian text; no generation internals
+          example: Нет свободного слота сессии.
+
+    CreateSessionRequest:
+      type: object
+      additionalProperties: false
+      required: [mode]
+      properties:
+        mode:
+          $ref: '#/components/schemas/GameMode'
+
+    CellCoordinate:
+      type: object
+      additionalProperties: false
+      required: [column, row, code]
+      description: |
+        API and storage use indices [0..9, 0..9]. `code` is the two-digit
+        column-row string (FT-063); A3/А3 → `02`. Not stored separately from column/row.
+      properties:
+        column:
+          type: integer
+          minimum: 0
+          maximum: 9
+          example: 0
+        row:
+          type: integer
+          minimum: 0
+          maximum: 9
+          example: 2
+        code:
+          type: string
+          pattern: '^[0-9]{2}$'
+          minLength: 2
+          maxLength: 2
+          example: '02'
+
+    Occupancy:
+      type: object
+      additionalProperties: false
+      required: [kind]
+      properties:
+        kind:
+          $ref: '#/components/schemas/OccupancyKind'
+        ship:
+          $ref: '#/components/schemas/ShipId'
+      description: "ship is required when kind is Deck and must be absent when Empty"
+
+    BoardCellPrivate:
+      type: object
+      additionalProperties: false
+      required: [coords, occupancy, mark]
+      description: Cell on the player's own board (occupancy visible)
+      properties:
+        coords:
+          $ref: '#/components/schemas/CellCoordinate'
+        occupancy:
+          $ref: '#/components/schemas/Occupancy'
+        mark:
+          $ref: '#/components/schemas/Mark'
+
+    BoardCellPublic:
+      type: object
+      additionalProperties: false
+      required: [coords, mark]
+      description: |
+        Cell on the backend board as shown to the player. Occupancy is omitted
+        so unrevealed decks stay hidden (FT-015).
+      properties:
+        coords:
+          $ref: '#/components/schemas/CellCoordinate'
+        mark:
+          $ref: '#/components/schemas/Mark'
+
+    PlayerBoard:
+      type: object
+      additionalProperties: false
+      required: [owner, size, cells]
+      properties:
+        owner:
+          $ref: '#/components/schemas/Side'
+        size:
+          type: integer
+          enum: [10]
+        cells:
+          type: array
+          minItems: 100
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/BoardCellPrivate'
+
+    BackendBoard:
+      type: object
+      additionalProperties: false
+      required: [owner, size, cells]
+      properties:
+        owner:
+          $ref: '#/components/schemas/Side'
+        size:
+          type: integer
+          enum: [10]
+        cells:
+          type: array
+          minItems: 100
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/BoardCellPublic'
+
+    Deck:
+      type: object
+      additionalProperties: false
+      required: [coords, destroyed]
+      properties:
+        coords:
+          $ref: '#/components/schemas/CellCoordinate'
+        destroyed:
+          type: boolean
+
+    Ship:
+      type: object
+      additionalProperties: false
+      required: [id, type, length, facing, status, decks]
+      properties:
+        id:
+          $ref: '#/components/schemas/ShipId'
+        type:
+          $ref: '#/components/schemas/ShipType'
+        length:
+          type: integer
+          minimum: 1
+          maximum: 4
+          description: Must match type (Battleship 4, Cruiser 3, Destroyer 2, Boat 1)
+        facing:
+          $ref: '#/components/schemas/Facing'
+        status:
+          $ref: '#/components/schemas/ShipStatus'
+        decks:
+          type: array
+          minItems: 1
+          maxItems: 4
+          items:
+            $ref: '#/components/schemas/Deck'
+
+    Fleet:
+      type: object
+      additionalProperties: false
+      required: [owner, ships]
+      description: Exactly 10 ships / 20 decks; composition 1+2+3+4 (FT-009)
+      properties:
+        owner:
+          $ref: '#/components/schemas/Side'
+        ships:
+          type: array
+          minItems: 10
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/Ship'
+
+    Shot:
+      type: object
+      additionalProperties: false
+      required: [seq, shooter, coords, result]
+      description: Accepted shots only; rejections do not create Shot records
+      properties:
+        seq:
+          type: integer
+          minimum: 1
+        shooter:
+          $ref: '#/components/schemas/Side'
+        coords:
+          $ref: '#/components/schemas/CellCoordinate'
+        result:
+          $ref: '#/components/schemas/ShotResult'
+
+    AffectedCell:
+      type: object
+      additionalProperties: false
+      required: [coords, mark]
+      description: Cells updated by a shot, including SUNK buffer as MISS
+      properties:
+        coords:
+          $ref: '#/components/schemas/CellCoordinate'
+        mark:
+          $ref: '#/components/schemas/Mark'
+
+    SessionState:
+      type: object
+      additionalProperties: false
+      required:
+        - sessionId
+        - mode
+        - status
+        - turn
+        - ttlAnchor
+        - idleTtlSeconds
+        - remainTtlSeconds
+        - playerBoard
+        - backendBoard
+        - playerFleet
+        - shots
+      description: |
+        Operational view for the frontend. `backendFleet` and heatmap are never sent.
+        `winner` and `endReason` appear only when status is GameOver (rare on REST
+        create; possible on a snapshot if GAME_OVER was just applied before delete).
+      properties:
+        sessionId:
+          $ref: '#/components/schemas/GameSessionId'
+        mode:
+          $ref: '#/components/schemas/GameMode'
+        status:
+          $ref: '#/components/schemas/SessionStatus'
+        turn:
+          $ref: '#/components/schemas/Side'
+        winner:
+          $ref: '#/components/schemas/Side'
+        endReason:
+          $ref: '#/components/schemas/EndReason'
+        ttlAnchor:
+          type: string
+          format: date-time
+          description: UTC instant (ISO-8601 with Z). Shifts only on create and accepted shot.
+          example: '2026-08-25T15:00:00.000Z'
+        idleTtlSeconds:
+          type: integer
+          enum: [1800]
+          description: Idle TTL length; always 30 minutes
+        remainTtlSeconds:
+          type: integer
+          minimum: 0
+          maximum: 1800
+          description: Remaining idle TTL at response time (FT-080); UI may format freely
+        playerBoard:
+          $ref: '#/components/schemas/PlayerBoard'
+        backendBoard:
+          $ref: '#/components/schemas/BackendBoard'
+        playerFleet:
+          $ref: '#/components/schemas/Fleet'
+        shots:
+          type: array
+          items:
+            $ref: '#/components/schemas/Shot'
+
+    StatisticsSnapshot:
+      type: object
+      additionalProperties: false
+      required: [games, playerWins, backendWins, avgShots]
+      description: |
+        Derived from ledger records at read time.
+        Invariant: playerWins + backendWins = games.
+        avgShots is the mean of Record.shots, rounded to 2 decimal places
+        (half away from zero). When games is 0, avgShots is 0.
+      properties:
+        games:
+          type: integer
+          minimum: 0
+        playerWins:
+          type: integer
+          minimum: 0
+        backendWins:
+          type: integer
+          minimum: 0
+        avgShots:
+          type: number
+          minimum: 0
+          multipleOf: 0.01
+          example: 47.3
+
+    ShotCommand:
+      type: object
+      additionalProperties: false
+      required: [type, column, row]
+      description: Client to server WebSocket frame (UC-002). Do not send code; use column and row.
+      properties:
+        type:
+          type: string
+          enum: [shot]
+        column:
+          type: integer
+          minimum: 0
+          maximum: 9
+        row:
+          type: integer
+          minimum: 0
+          maximum: 9
+
+    SurrenderCommand:
+      type: object
+      additionalProperties: false
+      required: [type]
+      description: Client → server WebSocket frame (UC-005)
+      properties:
+        type:
+          type: string
+          enum: [surrender]
+
+    SessionSnapshotEvent:
+      type: object
+      additionalProperties: false
+      required: [type, session]
+      description: First server frame after a successful upgrade (UC-006 / FT-054)
+      properties:
+        type:
+          type: string
+          enum: [sessionSnapshot]
+        session:
+          $ref: '#/components/schemas/SessionState'
+
+    ShotResolvedEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - seq
+        - shooter
+        - coords
+        - result
+        - affectedCells
+        - turn
+        - remainTtlSeconds
+      description: |
+        FT-036 shot outcome for Player or Backend. On SUNK, `affectedCells` includes
+        the sunk decks as SUNK and the perimeter as MISS (FT-021). GAME_OVER is a
+        separate following `gameOver` event (A0005, FT-071).
+      properties:
+        type:
+          type: string
+          enum: [shotResolved]
+        seq:
+          type: integer
+          minimum: 1
+        shooter:
+          $ref: '#/components/schemas/Side'
+        coords:
+          $ref: '#/components/schemas/CellCoordinate'
+        result:
+          $ref: '#/components/schemas/ShotResult'
+        affectedCells:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/AffectedCell'
+        turn:
+          $ref: '#/components/schemas/Side'
+        remainTtlSeconds:
+          type: integer
+          minimum: 0
+          maximum: 1800
+
+    GameOverEvent:
+      type: object
+      additionalProperties: false
+      required: [type, winner, endReason]
+      description: Separate GAME_OVER notification (FT-036, UC-004). After delivery the session is deleted (A0145).
+      properties:
+        type:
+          type: string
+          enum: [gameOver]
+        winner:
+          $ref: '#/components/schemas/Side'
+        endReason:
+          $ref: '#/components/schemas/EndReason'
+        seq:
+          type: integer
+          minimum: 1
+          description: Last accepted shot seq when the game ended by a shot; omitted on surrender with zero shots
+
+    SessionAbortedEvent:
+      type: object
+      additionalProperties: false
+      required: [type, code, message, messageRu]
+      description: Empty heatmap while the player fleet is still alive (FT-076, A0106)
+      properties:
+        type:
+          type: string
+          enum: [sessionAborted]
+        code:
+          type: string
+          enum: [SESSION_ABORTED]
+        message:
+          type: string
+          example: The match was interrupted due to a server error. Start a new game.
+        messageRu:
+          type: string
+          example: Партия прервана из-за ошибки сервера. Начните новую.
+
+    TtlExpiredEvent:
+      type: object
+      additionalProperties: false
+      required: [type]
+      description: Idle TTL elapsed; session deleted without GAME_OVER (FT-066, FT-053)
+      properties:
+        type:
+          type: string
+          enum: [ttlExpired]
+
+    ErrorEvent:
+      type: object
+      additionalProperties: false
+      required: [type, code, message, messageRu]
+      description: Client command rejected on the party channel; match state unchanged
+      properties:
+        type:
+          type: string
+          enum: [error]
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+        messageRu:
+          type: string
+
+    ServerMessage:
+      oneOf:
+        - $ref: '#/components/schemas/SessionSnapshotEvent'
+        - $ref: '#/components/schemas/ShotResolvedEvent'
+        - $ref: '#/components/schemas/GameOverEvent'
+        - $ref: '#/components/schemas/SessionAbortedEvent'
+        - $ref: '#/components/schemas/TtlExpiredEvent'
+        - $ref: '#/components/schemas/ErrorEvent'
+      discriminator:
+        propertyName: type
+        mapping:
+          sessionSnapshot: '#/components/schemas/SessionSnapshotEvent'
+          shotResolved: '#/components/schemas/ShotResolvedEvent'
+          gameOver: '#/components/schemas/GameOverEvent'
+          sessionAborted: '#/components/schemas/SessionAbortedEvent'
+          ttlExpired: '#/components/schemas/TtlExpiredEvent'
+          error: '#/components/schemas/ErrorEvent'
+
+  examples:
+    ErrorValidation:
+      summary: Malformed JSON or wrong types
+      value:
+        code: VALIDATION_ERROR
+        message: Request body is missing required fields or has the wrong type.
+        messageRu: В запросе нет обязательных полей или неверный тип данных.
+
+    ErrorSessionLimit:
+      summary: Fourth concurrent session refused
+      value:
+        code: SESSION_LIMIT_REACHED
+        message: No free session slot.
+        messageRu: Нет свободного слота сессии.
+
+    ErrorSessionStartFailed:
+      summary: Placement not found within the start window
+      value:
+        code: SESSION_START_FAILED
+        message: Could not start the match. Try again.
+        messageRu: Не удалось начать партию. Попробуйте ещё раз.
+
+    ErrorSessionUnavailable:
+      summary: Unified resume/access refusal
+      value:
+        code: SESSION_UNAVAILABLE
+        message: Session is unavailable.
+        messageRu: Сессия недоступна.
+
+    ErrorSessionAlreadyConnected:
+      summary: Second frontend on the same session
+      value:
+        code: SESSION_ALREADY_CONNECTED
+        message: This session already has an active connection.
+        messageRu: К этой сессии уже есть активное соединение.
+
+    ErrorShotWrongChannel:
+      summary: Shot sent over REST
+      value:
+        code: SHOT_WRONG_CHANNEL
+        message: Shots must be sent on the party channel.
+        messageRu: Выстрел принимается только по каналу партии.
+
+    ErrorSurrenderWrongChannel:
+      summary: Surrender sent over REST
+      value:
+        code: SURRENDER_WRONG_CHANNEL
+        message: Surrender must be sent on the party channel.
+        messageRu: Сдача принимается только по каналу партии.
+
+    ErrorInternal:
+      summary: Generic 5xx
+      value:
+        code: INTERNAL_ERROR
+        message: Internal server error.
+        messageRu: Внутренняя ошибка сервера.
+
+    ShotMissExample:
+      summary: Player miss; turn passes to backend
+      value:
+        type: shotResolved
+        seq: 1
+        shooter: Player
+        coords:
+          column: 9
+          row: 9
+          code: '99'
+        result: MISS
+        affectedCells:
+          - coords: { column: 9, row: 9, code: '99' }
+            mark: MISS
+        turn: Backend
+        remainTtlSeconds: 1800
+
+    ShotSunkExample:
+      summary: Sunk ship with buffer cells as MISS
+      value:
+        type: shotResolved
+        seq: 4
+        shooter: Player
+        coords:
+          column: 0
+          row: 2
+          code: '02'
+        result: SUNK
+        affectedCells:
+          - coords: { column: 0, row: 2, code: '02' }
+            mark: SUNK
+          - coords: { column: 0, row: 1, code: '01' }
+            mark: MISS
+          - coords: { column: 0, row: 3, code: '03' }
+            mark: MISS
+          - coords: { column: 1, row: 1, code: '11' }
+            mark: MISS
+          - coords: { column: 1, row: 2, code: '12' }
+            mark: MISS
+          - coords: { column: 1, row: 3, code: '13' }
+            mark: MISS
+        turn: Player
+        remainTtlSeconds: 1740
+
+    GameOverFleetLostExample:
+      summary: Player wins after last SUNK
+      value:
+        type: gameOver
+        winner: Player
+        endReason: FleetLost
+        seq: 42
+
+    SessionAbortedExample:
+      summary: Empty heatmap while player fleet still alive
+      value:
+        type: sessionAborted
+        code: SESSION_ABORTED
+        message: The match was interrupted due to a server error. Start a new game.
+        messageRu: Партия прервана из-за ошибки сервера. Начните новую.
+
+    WsErrorNotYourTurn:
+      summary: Shot while it is the backend's turn
+      value:
+        type: error
+        code: SHOT_NOT_YOUR_TURN
+        message: It is not your turn.
+        messageRu: Сейчас не ваш ход.
+
+    SessionCreatedExample:
+      summary: New session, player to move, both boards 10x10
+      value:
+        sessionId: a1b2c3d4e5f6789012345678abcdef01
+        mode: PvE
+        status: Active
+        turn: Player
+        ttlAnchor: '2026-08-25T15:00:00.000Z'
+        idleTtlSeconds: 1800
+        remainTtlSeconds: 1800
+        playerBoard:
+          owner: Player
+          size: 10
+          cells:
+            - coords: { column: 0, row: 0, code: '00' }
+              occupancy: { kind: Deck, ship: ship01 }
+              mark: Unchecked
+            - coords: { column: 1, row: 0, code: '10' }
+              occupancy: { kind: Deck, ship: ship01 }
+              mark: Unchecked
+            - coords: { column: 2, row: 0, code: '20' }
+              occupancy: { kind: Deck, ship: ship01 }
+              mark: Unchecked
+            - coords: { column: 3, row: 0, code: '30' }
+              occupancy: { kind: Deck, ship: ship01 }
+              mark: Unchecked
+            - coords: { column: 4, row: 0, code: '40' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 5, row: 0, code: '50' }
+              occupancy: { kind: Deck, ship: ship02 }
+              mark: Unchecked
+            - coords: { column: 6, row: 0, code: '60' }
+              occupancy: { kind: Deck, ship: ship02 }
+              mark: Unchecked
+            - coords: { column: 7, row: 0, code: '70' }
+              occupancy: { kind: Deck, ship: ship02 }
+              mark: Unchecked
+            - coords: { column: 8, row: 0, code: '80' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 9, row: 0, code: '90' }
+              occupancy: { kind: Deck, ship: ship07 }
+              mark: Unchecked
+            - coords: { column: 0, row: 1, code: '01' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 1, row: 1, code: '11' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 2, row: 1, code: '21' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 3, row: 1, code: '31' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 4, row: 1, code: '41' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 5, row: 1, code: '51' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 6, row: 1, code: '61' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 7, row: 1, code: '71' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 8, row: 1, code: '81' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 9, row: 1, code: '91' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 0, row: 2, code: '02' }
+              occupancy: { kind: Deck, ship: ship03 }
+              mark: Unchecked
+            - coords: { column: 1, row: 2, code: '12' }
+              occupancy: { kind: Deck, ship: ship03 }
+              mark: Unchecked
+            - coords: { column: 2, row: 2, code: '22' }
+              occupancy: { kind: Deck, ship: ship03 }
+              mark: Unchecked
+            - coords: { column: 3, row: 2, code: '32' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 4, row: 2, code: '42' }
+              occupancy: { kind: Deck, ship: ship04 }
+              mark: Unchecked
+            - coords: { column: 5, row: 2, code: '52' }
+              occupancy: { kind: Deck, ship: ship04 }
+              mark: Unchecked
+            - coords: { column: 6, row: 2, code: '62' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 7, row: 2, code: '72' }
+              occupancy: { kind: Deck, ship: ship05 }
+              mark: Unchecked
+            - coords: { column: 8, row: 2, code: '82' }
+              occupancy: { kind: Deck, ship: ship05 }
+              mark: Unchecked
+            - coords: { column: 9, row: 2, code: '92' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 0, row: 3, code: '03' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 1, row: 3, code: '13' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 2, row: 3, code: '23' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 3, row: 3, code: '33' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 4, row: 3, code: '43' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 5, row: 3, code: '53' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 6, row: 3, code: '63' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 7, row: 3, code: '73' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 8, row: 3, code: '83' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 9, row: 3, code: '93' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 0, row: 4, code: '04' }
+              occupancy: { kind: Deck, ship: ship06 }
+              mark: Unchecked
+            - coords: { column: 1, row: 4, code: '14' }
+              occupancy: { kind: Deck, ship: ship06 }
+              mark: Unchecked
+            - coords: { column: 2, row: 4, code: '24' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 3, row: 4, code: '34' }
+              occupancy: { kind: Deck, ship: ship09 }
+              mark: Unchecked
+            - coords: { column: 4, row: 4, code: '44' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 5, row: 4, code: '54' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 6, row: 4, code: '64' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 7, row: 4, code: '74' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 8, row: 4, code: '84' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 9, row: 4, code: '94' }
+              occupancy: { kind: Deck, ship: ship08 }
+              mark: Unchecked
+            - coords: { column: 0, row: 5, code: '05' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 1, row: 5, code: '15' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 2, row: 5, code: '25' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 3, row: 5, code: '35' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 4, row: 5, code: '45' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 5, row: 5, code: '55' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 6, row: 5, code: '65' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 7, row: 5, code: '75' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 8, row: 5, code: '85' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 9, row: 5, code: '95' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 0, row: 6, code: '06' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 1, row: 6, code: '16' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 2, row: 6, code: '26' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 3, row: 6, code: '36' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 4, row: 6, code: '46' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 5, row: 6, code: '56' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 6, row: 6, code: '66' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 7, row: 6, code: '76' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 8, row: 6, code: '86' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 9, row: 6, code: '96' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 0, row: 7, code: '07' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 1, row: 7, code: '17' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 2, row: 7, code: '27' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 3, row: 7, code: '37' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 4, row: 7, code: '47' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 5, row: 7, code: '57' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 6, row: 7, code: '67' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 7, row: 7, code: '77' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 8, row: 7, code: '87' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 9, row: 7, code: '97' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 0, row: 8, code: '08' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 1, row: 8, code: '18' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 2, row: 8, code: '28' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 3, row: 8, code: '38' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 4, row: 8, code: '48' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 5, row: 8, code: '58' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 6, row: 8, code: '68' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 7, row: 8, code: '78' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 8, row: 8, code: '88' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 9, row: 8, code: '98' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 0, row: 9, code: '09' }
+              occupancy: { kind: Deck, ship: ship10 }
+              mark: Unchecked
+            - coords: { column: 1, row: 9, code: '19' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 2, row: 9, code: '29' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 3, row: 9, code: '39' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 4, row: 9, code: '49' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 5, row: 9, code: '59' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 6, row: 9, code: '69' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 7, row: 9, code: '79' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 8, row: 9, code: '89' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+            - coords: { column: 9, row: 9, code: '99' }
+              occupancy: { kind: Empty }
+              mark: Unchecked
+        backendBoard:
+          owner: Backend
+          size: 10
+          cells:
+            - coords: { column: 0, row: 0, code: '00' }
+              mark: Unchecked
+            - coords: { column: 1, row: 0, code: '10' }
+              mark: Unchecked
+            - coords: { column: 2, row: 0, code: '20' }
+              mark: Unchecked
+            - coords: { column: 3, row: 0, code: '30' }
+              mark: Unchecked
+            - coords: { column: 4, row: 0, code: '40' }
+              mark: Unchecked
+            - coords: { column: 5, row: 0, code: '50' }
+              mark: Unchecked
+            - coords: { column: 6, row: 0, code: '60' }
+              mark: Unchecked
+            - coords: { column: 7, row: 0, code: '70' }
+              mark: Unchecked
+            - coords: { column: 8, row: 0, code: '80' }
+              mark: Unchecked
+            - coords: { column: 9, row: 0, code: '90' }
+              mark: Unchecked
+            - coords: { column: 0, row: 1, code: '01' }
+              mark: Unchecked
+            - coords: { column: 1, row: 1, code: '11' }
+              mark: Unchecked
+            - coords: { column: 2, row: 1, code: '21' }
+              mark: Unchecked
+            - coords: { column: 3, row: 1, code: '31' }
+              mark: Unchecked
+            - coords: { column: 4, row: 1, code: '41' }
+              mark: Unchecked
+            - coords: { column: 5, row: 1, code: '51' }
+              mark: Unchecked
+            - coords: { column: 6, row: 1, code: '61' }
+              mark: Unchecked
+            - coords: { column: 7, row: 1, code: '71' }
+              mark: Unchecked
+            - coords: { column: 8, row: 1, code: '81' }
+              mark: Unchecked
+            - coords: { column: 9, row: 1, code: '91' }
+              mark: Unchecked
+            - coords: { column: 0, row: 2, code: '02' }
+              mark: Unchecked
+            - coords: { column: 1, row: 2, code: '12' }
+              mark: Unchecked
+            - coords: { column: 2, row: 2, code: '22' }
+              mark: Unchecked
+            - coords: { column: 3, row: 2, code: '32' }
+              mark: Unchecked
+            - coords: { column: 4, row: 2, code: '42' }
+              mark: Unchecked
+            - coords: { column: 5, row: 2, code: '52' }
+              mark: Unchecked
+            - coords: { column: 6, row: 2, code: '62' }
+              mark: Unchecked
+            - coords: { column: 7, row: 2, code: '72' }
+              mark: Unchecked
+            - coords: { column: 8, row: 2, code: '82' }
+              mark: Unchecked
+            - coords: { column: 9, row: 2, code: '92' }
+              mark: Unchecked
+            - coords: { column: 0, row: 3, code: '03' }
+              mark: Unchecked
+            - coords: { column: 1, row: 3, code: '13' }
+              mark: Unchecked
+            - coords: { column: 2, row: 3, code: '23' }
+              mark: Unchecked
+            - coords: { column: 3, row: 3, code: '33' }
+              mark: Unchecked
+            - coords: { column: 4, row: 3, code: '43' }
+              mark: Unchecked
+            - coords: { column: 5, row: 3, code: '53' }
+              mark: Unchecked
+            - coords: { column: 6, row: 3, code: '63' }
+              mark: Unchecked
+            - coords: { column: 7, row: 3, code: '73' }
+              mark: Unchecked
+            - coords: { column: 8, row: 3, code: '83' }
+              mark: Unchecked
+            - coords: { column: 9, row: 3, code: '93' }
+              mark: Unchecked
+            - coords: { column: 0, row: 4, code: '04' }
+              mark: Unchecked
+            - coords: { column: 1, row: 4, code: '14' }
+              mark: Unchecked
+            - coords: { column: 2, row: 4, code: '24' }
+              mark: Unchecked
+            - coords: { column: 3, row: 4, code: '34' }
+              mark: Unchecked
+            - coords: { column: 4, row: 4, code: '44' }
+              mark: Unchecked
+            - coords: { column: 5, row: 4, code: '54' }
+              mark: Unchecked
+            - coords: { column: 6, row: 4, code: '64' }
+              mark: Unchecked
+            - coords: { column: 7, row: 4, code: '74' }
+              mark: Unchecked
+            - coords: { column: 8, row: 4, code: '84' }
+              mark: Unchecked
+            - coords: { column: 9, row: 4, code: '94' }
+              mark: Unchecked
+            - coords: { column: 0, row: 5, code: '05' }
+              mark: Unchecked
+            - coords: { column: 1, row: 5, code: '15' }
+              mark: Unchecked
+            - coords: { column: 2, row: 5, code: '25' }
+              mark: Unchecked
+            - coords: { column: 3, row: 5, code: '35' }
+              mark: Unchecked
+            - coords: { column: 4, row: 5, code: '45' }
+              mark: Unchecked
+            - coords: { column: 5, row: 5, code: '55' }
+              mark: Unchecked
+            - coords: { column: 6, row: 5, code: '65' }
+              mark: Unchecked
+            - coords: { column: 7, row: 5, code: '75' }
+              mark: Unchecked
+            - coords: { column: 8, row: 5, code: '85' }
+              mark: Unchecked
+            - coords: { column: 9, row: 5, code: '95' }
+              mark: Unchecked
+            - coords: { column: 0, row: 6, code: '06' }
+              mark: Unchecked
+            - coords: { column: 1, row: 6, code: '16' }
+              mark: Unchecked
+            - coords: { column: 2, row: 6, code: '26' }
+              mark: Unchecked
+            - coords: { column: 3, row: 6, code: '36' }
+              mark: Unchecked
+            - coords: { column: 4, row: 6, code: '46' }
+              mark: Unchecked
+            - coords: { column: 5, row: 6, code: '56' }
+              mark: Unchecked
+            - coords: { column: 6, row: 6, code: '66' }
+              mark: Unchecked
+            - coords: { column: 7, row: 6, code: '76' }
+              mark: Unchecked
+            - coords: { column: 8, row: 6, code: '86' }
+              mark: Unchecked
+            - coords: { column: 9, row: 6, code: '96' }
+              mark: Unchecked
+            - coords: { column: 0, row: 7, code: '07' }
+              mark: Unchecked
+            - coords: { column: 1, row: 7, code: '17' }
+              mark: Unchecked
+            - coords: { column: 2, row: 7, code: '27' }
+              mark: Unchecked
+            - coords: { column: 3, row: 7, code: '37' }
+              mark: Unchecked
+            - coords: { column: 4, row: 7, code: '47' }
+              mark: Unchecked
+            - coords: { column: 5, row: 7, code: '57' }
+              mark: Unchecked
+            - coords: { column: 6, row: 7, code: '67' }
+              mark: Unchecked
+            - coords: { column: 7, row: 7, code: '77' }
+              mark: Unchecked
+            - coords: { column: 8, row: 7, code: '87' }
+              mark: Unchecked
+            - coords: { column: 9, row: 7, code: '97' }
+              mark: Unchecked
+            - coords: { column: 0, row: 8, code: '08' }
+              mark: Unchecked
+            - coords: { column: 1, row: 8, code: '18' }
+              mark: Unchecked
+            - coords: { column: 2, row: 8, code: '28' }
+              mark: Unchecked
+            - coords: { column: 3, row: 8, code: '38' }
+              mark: Unchecked
+            - coords: { column: 4, row: 8, code: '48' }
+              mark: Unchecked
+            - coords: { column: 5, row: 8, code: '58' }
+              mark: Unchecked
+            - coords: { column: 6, row: 8, code: '68' }
+              mark: Unchecked
+            - coords: { column: 7, row: 8, code: '78' }
+              mark: Unchecked
+            - coords: { column: 8, row: 8, code: '88' }
+              mark: Unchecked
+            - coords: { column: 9, row: 8, code: '98' }
+              mark: Unchecked
+            - coords: { column: 0, row: 9, code: '09' }
+              mark: Unchecked
+            - coords: { column: 1, row: 9, code: '19' }
+              mark: Unchecked
+            - coords: { column: 2, row: 9, code: '29' }
+              mark: Unchecked
+            - coords: { column: 3, row: 9, code: '39' }
+              mark: Unchecked
+            - coords: { column: 4, row: 9, code: '49' }
+              mark: Unchecked
+            - coords: { column: 5, row: 9, code: '59' }
+              mark: Unchecked
+            - coords: { column: 6, row: 9, code: '69' }
+              mark: Unchecked
+            - coords: { column: 7, row: 9, code: '79' }
+              mark: Unchecked
+            - coords: { column: 8, row: 9, code: '89' }
+              mark: Unchecked
+            - coords: { column: 9, row: 9, code: '99' }
+              mark: Unchecked
+        playerFleet:
+          owner: Player
+          ships:
+            - id: ship01
+              type: Battleship
+              length: 4
+              facing: Horizontal
+              status: Intact
+              decks:
+                - coords: { column: 0, row: 0, code: '00' }
+                  destroyed: false
+                - coords: { column: 1, row: 0, code: '10' }
+                  destroyed: false
+                - coords: { column: 2, row: 0, code: '20' }
+                  destroyed: false
+                - coords: { column: 3, row: 0, code: '30' }
+                  destroyed: false
+            - id: ship02
+              type: Cruiser
+              length: 3
+              facing: Horizontal
+              status: Intact
+              decks:
+                - coords: { column: 5, row: 0, code: '50' }
+                  destroyed: false
+                - coords: { column: 6, row: 0, code: '60' }
+                  destroyed: false
+                - coords: { column: 7, row: 0, code: '70' }
+                  destroyed: false
+            - id: ship03
+              type: Cruiser
+              length: 3
+              facing: Horizontal
+              status: Intact
+              decks:
+                - coords: { column: 0, row: 2, code: '02' }
+                  destroyed: false
+                - coords: { column: 1, row: 2, code: '12' }
+                  destroyed: false
+                - coords: { column: 2, row: 2, code: '22' }
+                  destroyed: false
+            - id: ship04
+              type: Destroyer
+              length: 2
+              facing: Horizontal
+              status: Intact
+              decks:
+                - coords: { column: 4, row: 2, code: '42' }
+                  destroyed: false
+                - coords: { column: 5, row: 2, code: '52' }
+                  destroyed: false
+            - id: ship05
+              type: Destroyer
+              length: 2
+              facing: Horizontal
+              status: Intact
+              decks:
+                - coords: { column: 7, row: 2, code: '72' }
+                  destroyed: false
+                - coords: { column: 8, row: 2, code: '82' }
+                  destroyed: false
+            - id: ship06
+              type: Destroyer
+              length: 2
+              facing: Horizontal
+              status: Intact
+              decks:
+                - coords: { column: 0, row: 4, code: '04' }
+                  destroyed: false
+                - coords: { column: 1, row: 4, code: '14' }
+                  destroyed: false
+            - id: ship07
+              type: Boat
+              length: 1
+              facing: Horizontal
+              status: Intact
+              decks:
+                - coords: { column: 9, row: 0, code: '90' }
+                  destroyed: false
+            - id: ship08
+              type: Boat
+              length: 1
+              facing: Vertical
+              status: Intact
+              decks:
+                - coords: { column: 9, row: 4, code: '94' }
+                  destroyed: false
+            - id: ship09
+              type: Boat
+              length: 1
+              facing: Horizontal
+              status: Intact
+              decks:
+                - coords: { column: 3, row: 4, code: '34' }
+                  destroyed: false
+            - id: ship10
+              type: Boat
+              length: 1
+              facing: Horizontal
+              status: Intact
+              decks:
+                - coords: { column: 0, row: 9, code: '09' }
+                  destroyed: false
+        shots: []

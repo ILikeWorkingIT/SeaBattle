@@ -17,6 +17,7 @@
 | `/review-ddd` | `.cursor/commands/review-ddd.md` | Критический аудит DDD-модели по `.cursor/skills/skill-review-ddd.md` (самостоятельный режим: только отчёт) |
 | `/data-dictionary` | `.cursor/commands/data-dictionary.md` | Словарь данных (поля, типы, ограничения, MVP) по `.cursor/skills/skill-data-dictionary.md`; после записи файла обязателен гейт проверки до отчёта |
 | `/ui-prototyping` | `.cursor/commands/ui-prototyping.md` | Интерактивный макет окна фронтенда по `.cursor/skills/skill-ui-prototyping.md` |
+| `/openai` | `.cursor/commands/openai.md` | OpenAPI-спецификация (YAML, Swagger UI + ReDoc) по `.cursor/skills/skill-openai.md`; после записи файла обязателен гейт проверки и просмотрщики |
 
 ## Режимы `/qc-ft-nft` и `/qc-us-uc`
 
