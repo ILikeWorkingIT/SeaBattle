@@ -2,7 +2,7 @@
 
 **Тип:** classDiagram (Mermaid)  
 **Срез:** сущности, объекты-значения и бизнес-действия агрегатов Session / Registry / Ledger / Settings / Runtime. Службы `StartSession` и `HeatmapBot` — в тексте, на схеме не рисуются.  
-**Статус:** `Черновик, требует согласования`  
+**Статус:** `Согласовано`, 2026-08-25 (A0148)  
 **Дата:** 2026-08-25
 
 ---
@@ -158,7 +158,7 @@
 | Composition | battleships; cruisers; destroyers; boats | 1; 2; 3; 4 |
 | Slot | sessionId | GameSessionId занятого места |
 | Heatmap | (cells через CellWeight) | матрица 10×10 |
-| CellWeight | weight | вес ≥ 0; вне Target = 0 |
+| CellWeight | weight | целое ≥ 0 (A0151); вне Target = 0 |
 | Remaining | lengths | длины ещё не потопленных кораблей Игрока |
 | TargetArea | kind | Cross (один HIT) или Axis (два+ на линии) |
 | Aim | outcome; targetShip | Picked/Empty; ShipId в Target |
@@ -328,7 +328,7 @@ classDiagram
   }
   class CellWeight {
     <<ValueObject>>
-    +weight Number
+    +weight Integer
   }
   class Remaining {
     <<ValueObject>>
@@ -400,7 +400,7 @@ classDiagram
 
 ## Замечания
 
-- Черновик: доменная модель и пакет UC в источниках тоже со статусом черновика; US согласованы (A0114).
+- Источники согласованы: доменная модель (A0147), пакет UC (A0146), US (A0114). Сама диаграмма — A0148.
 - `Aim` и `Heatmap` не хранятся в оперативном состоянии FT-002 и Игроку не показываются. Связи Heatmap → Remaining / TargetArea / Aim — входы и результат расчёта службы, не хранимые поля агрегата.
 - Имена методов не являются контрактом API.
 - Перечисления и однополевые ID-VO не вынесены в боксы (см. §2).

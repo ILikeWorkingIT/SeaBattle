@@ -15,7 +15,7 @@ class StatsChart(QWidget):
         self._player = 0
         self._backend = 0
         self._player_label = "Player"
-        self._backend_label = "Backend"
+        self._backend_label = "Computer"
 
     def bind(self, snapshot: Snapshot, player_label: str, backend_label: str) -> None:
         self._player = snapshot.player_wins
