@@ -4,6 +4,21 @@
 
 Стек по ТЗ: Python 3.12+, FastAPI, Redis, PySide6, Docker.
 
+## Как открыть окно Фронтенда
+
+Прототип — десктопное окно PySide6. Запуск из чата Cursor окно на рабочий стол не выводит (скрытая сессия).
+
+1. В проводнике откройте `src` и дважды щёлкните `run-frontend.bat`.
+2. Запасной способ — обычный PowerShell (не терминал агента в чате):
+
+```powershell
+cd e:\Cursor\SeaBattle\src
+$env:PYTHONPATH = "e:\Cursor\SeaBattle\src"
+python -m frontend
+```
+
+Заголовок окна: **Sea Battle — PvE**. Нужны Python 3.12+ и `PySide6` (`pip install -r src/frontend/requirements.txt`).
+
 ## Входные документы
 
 - `documentation/specification-sea-battle-v1-1.md` — техническое задание (правила игры, ИИ, стек, языки).
