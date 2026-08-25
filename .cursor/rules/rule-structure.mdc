@@ -11,7 +11,7 @@ alwaysApply: true
 * `diagrams` — архитектурные и логические диаграммы (PlantUML / Mermaid / BPMN); целевая папка, создаётся по необходимости.
 * `.cursor/skills` — промпты и инструкции для AI.
 * `.cursor/rules` — правила для AI.
-* `.cursor/commands` — команды Cursor (`/ft`, `/nft`, `/qc-ft-nft`, `/pin-memory` и др.).
+* `.cursor/commands` — команды Cursor (`/ft`, `/nft`, `/us`, `/qc-ft-nft`, `/pin-memory` и др.).
 * `src` — исходный код MVP, скрипты, настройки; целевая папка, создаётся по необходимости.
 * `reports` — файлы с отчётами.
 * `artifacts` — артефакты проекта, кроме тех, что указаны для папки requirements; целевая папка, создаётся по необходимости.

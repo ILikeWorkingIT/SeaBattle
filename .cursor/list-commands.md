@@ -7,4 +7,5 @@
 | `/pin-memory` | `.cursor/commands/pin-memory.md` | Быстро сохранить устойчивый вывод из чата в `reports/agent-memory.md` |
 | `/ft` | `.cursor/commands/ft.md` | Написать или обновить функциональные требования по `.cursor/skills/skill-ft.md` |
 | `/nft` | `.cursor/commands/nft.md` | Написать или обновить нефункциональные требования по `.cursor/skills/skill-nft.md` |
+| `/us` | `.cursor/commands/us.md` | Написать или обновить User Stories, роли и права по `.cursor/skills/skill-us.md` |
 | `/qc-ft-nft` | `.cursor/commands/qc-ft-nft.md` | Проверить качество ФТ и НФТ по `.cursor/skills/skill-quality-control-ft-nft.md` |
