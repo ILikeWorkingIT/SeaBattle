@@ -1,0 +1,499 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="Definitions_bpmn001"
+  targetNamespace="http://seabattle/bpmn">
+  <bpmn:process id="Process_BackendTurn" name="Ход Бэкенда и смена состояния партии" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Player" name="Игрок">
+        <bpmn:flowNodeRef>Task_PlayerReviewShot</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PlayerReviewGameOver</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_TurnProcessed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_GameOver</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Frontend" name="Фронтенд">
+        <bpmn:flowNodeRef>Task_ReceiveNotification</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_UpdateUi</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_OutcomeType</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Backend" name="Бэкенд">
+        <bpmn:flowNodeRef>StartEvent_BackendTurn</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RecalculateHeatmap</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_WoundedShip</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_HuntMode</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_TargetMode</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_HasWeightedCells</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ChooseCell</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_FireShot</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_ShotResult</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_FleetDestroyedAfterSunk</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CheckVictoryEmptyHeatmap</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_FleetDestroyedEmptyHeatmap</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RecordGameOver</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SendShotNotification</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SendGameOver</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SendSessionAborted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_DeleteSession</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_SessionAborted</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="StartEvent_BackendTurn" name="Наступило право хода Бэкенда">
+      <bpmn:outgoing>Flow_01</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:serviceTask id="Task_RecalculateHeatmap" name="Пересчитать матрицу вероятностей 10×10">
+      <bpmn:incoming>Flow_01</bpmn:incoming>
+      <bpmn:outgoing>Flow_02</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="Gateway_WoundedShip" name="Есть раненый непотопленный корабль?">
+      <bpmn:incoming>Flow_02</bpmn:incoming>
+      <bpmn:outgoing>Flow_03</bpmn:outgoing>
+      <bpmn:outgoing>Flow_04</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:serviceTask id="Task_HuntMode" name="Рассчитать веса клеток (Hunt Mode)">
+      <bpmn:incoming>Flow_03</bpmn:incoming>
+      <bpmn:outgoing>Flow_05</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Task_TargetMode" name="Рассчитать целевые клетки (Target Mode)">
+      <bpmn:incoming>Flow_04</bpmn:incoming>
+      <bpmn:outgoing>Flow_06</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="Gateway_HasWeightedCells" name="Есть клетки с ненулевым весом?">
+      <bpmn:incoming>Flow_05</bpmn:incoming>
+      <bpmn:incoming>Flow_06</bpmn:incoming>
+      <bpmn:outgoing>Flow_07</bpmn:outgoing>
+      <bpmn:outgoing>Flow_08</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:serviceTask id="Task_ChooseCell" name="Выбрать клетку с наибольшим весом">
+      <bpmn:incoming>Flow_07</bpmn:incoming>
+      <bpmn:outgoing>Flow_09</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Task_FireShot" name="Выполнить выстрел по полю Игрока">
+      <bpmn:incoming>Flow_09</bpmn:incoming>
+      <bpmn:outgoing>Flow_10</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="Gateway_ShotResult" name="Результат выстрела?">
+      <bpmn:incoming>Flow_10</bpmn:incoming>
+      <bpmn:outgoing>Flow_11</bpmn:outgoing>
+      <bpmn:outgoing>Flow_12</bpmn:outgoing>
+      <bpmn:outgoing>Flow_13</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:exclusiveGateway id="Gateway_FleetDestroyedAfterSunk" name="Флот Игрока уничтожен?">
+      <bpmn:incoming>Flow_13</bpmn:incoming>
+      <bpmn:outgoing>Flow_14</bpmn:outgoing>
+      <bpmn:outgoing>Flow_15</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:serviceTask id="Task_CheckVictoryEmptyHeatmap" name="Проверить победу Бэкенда (пустая heatmap)">
+      <bpmn:incoming>Flow_08</bpmn:incoming>
+      <bpmn:outgoing>Flow_16</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="Gateway_FleetDestroyedEmptyHeatmap" name="Флот Игрока уничтожен?">
+      <bpmn:incoming>Flow_16</bpmn:incoming>
+      <bpmn:outgoing>Flow_17</bpmn:outgoing>
+      <bpmn:outgoing>Flow_18</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:serviceTask id="Task_RecordGameOver" name="Зафиксировать GAME_OVER и статистику">
+      <bpmn:incoming>Flow_14</bpmn:incoming>
+      <bpmn:incoming>Flow_17</bpmn:incoming>
+      <bpmn:outgoing>Flow_19</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:sendTask id="Task_SendShotNotification" name="Отправить оповещение о выстреле и смене состояния">
+      <bpmn:incoming>Flow_11</bpmn:incoming>
+      <bpmn:incoming>Flow_12</bpmn:incoming>
+      <bpmn:incoming>Flow_15</bpmn:incoming>
+      <bpmn:outgoing>Flow_20</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:sendTask id="Task_SendGameOver" name="Отправить оповещение GAME_OVER">
+      <bpmn:incoming>Flow_19</bpmn:incoming>
+      <bpmn:outgoing>Flow_21</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:sendTask id="Task_SendSessionAborted" name="Отправить сообщение SESSION_ABORTED">
+      <bpmn:incoming>Flow_18</bpmn:incoming>
+      <bpmn:outgoing>Flow_22</bpmn:outgoing>
+    </bpmn:sendTask>
+
+    <bpmn:receiveTask id="Task_ReceiveNotification" name="Получить оповещение от Бэкенда">
+      <bpmn:incoming>Flow_20</bpmn:incoming>
+      <bpmn:incoming>Flow_21</bpmn:incoming>
+      <bpmn:incoming>Flow_22</bpmn:incoming>
+      <bpmn:outgoing>Flow_23</bpmn:outgoing>
+    </bpmn:receiveTask>
+
+    <bpmn:serviceTask id="Task_UpdateUi" name="Обновить состояние партии в UI">
+      <bpmn:incoming>Flow_23</bpmn:incoming>
+      <bpmn:outgoing>Flow_24</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:exclusiveGateway id="Gateway_OutcomeType" name="Какой исход оповещения?">
+      <bpmn:incoming>Flow_24</bpmn:incoming>
+      <bpmn:outgoing>Flow_25</bpmn:outgoing>
+      <bpmn:outgoing>Flow_26</bpmn:outgoing>
+      <bpmn:outgoing>Flow_27</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:userTask id="Task_PlayerReviewShot" name="Ознакомиться с результатом хода">
+      <bpmn:incoming>Flow_25</bpmn:incoming>
+      <bpmn:outgoing>Flow_28</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Task_PlayerReviewGameOver" name="Ознакомиться с завершением партии">
+      <bpmn:incoming>Flow_26</bpmn:incoming>
+      <bpmn:outgoing>Flow_29</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:serviceTask id="Task_DeleteSession" name="Удалить состояние сессии и освободить слот">
+      <bpmn:incoming>Flow_27</bpmn:incoming>
+      <bpmn:outgoing>Flow_30</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:endEvent id="EndEvent_TurnProcessed" name="Ход Бэкенда обработан">
+      <bpmn:incoming>Flow_28</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:endEvent id="EndEvent_GameOver" name="Партия завершена (GAME_OVER)">
+      <bpmn:incoming>Flow_29</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:endEvent id="EndEvent_SessionAborted" name="Сессия прервана (SESSION_ABORTED)">
+      <bpmn:incoming>Flow_30</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_01" sourceRef="StartEvent_BackendTurn" targetRef="Task_RecalculateHeatmap" />
+    <bpmn:sequenceFlow id="Flow_02" sourceRef="Task_RecalculateHeatmap" targetRef="Gateway_WoundedShip" />
+    <bpmn:sequenceFlow id="Flow_03" name="Нет — Hunt Mode" sourceRef="Gateway_WoundedShip" targetRef="Task_HuntMode" />
+    <bpmn:sequenceFlow id="Flow_04" name="Да — Target Mode" sourceRef="Gateway_WoundedShip" targetRef="Task_TargetMode" />
+    <bpmn:sequenceFlow id="Flow_05" sourceRef="Task_HuntMode" targetRef="Gateway_HasWeightedCells" />
+    <bpmn:sequenceFlow id="Flow_06" sourceRef="Task_TargetMode" targetRef="Gateway_HasWeightedCells" />
+    <bpmn:sequenceFlow id="Flow_07" name="Да" sourceRef="Gateway_HasWeightedCells" targetRef="Task_ChooseCell" />
+    <bpmn:sequenceFlow id="Flow_08" name="Нет" sourceRef="Gateway_HasWeightedCells" targetRef="Task_CheckVictoryEmptyHeatmap" />
+    <bpmn:sequenceFlow id="Flow_09" sourceRef="Task_ChooseCell" targetRef="Task_FireShot" />
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Task_FireShot" targetRef="Gateway_ShotResult" />
+    <bpmn:sequenceFlow id="Flow_11" name="MISS" sourceRef="Gateway_ShotResult" targetRef="Task_SendShotNotification" />
+    <bpmn:sequenceFlow id="Flow_12" name="HIT" sourceRef="Gateway_ShotResult" targetRef="Task_SendShotNotification" />
+    <bpmn:sequenceFlow id="Flow_13" name="SUNK" sourceRef="Gateway_ShotResult" targetRef="Gateway_FleetDestroyedAfterSunk" />
+    <bpmn:sequenceFlow id="Flow_14" name="Да — GAME_OVER" sourceRef="Gateway_FleetDestroyedAfterSunk" targetRef="Task_RecordGameOver" />
+    <bpmn:sequenceFlow id="Flow_15" name="Нет — продолжить" sourceRef="Gateway_FleetDestroyedAfterSunk" targetRef="Task_SendShotNotification" />
+    <bpmn:sequenceFlow id="Flow_16" sourceRef="Task_CheckVictoryEmptyHeatmap" targetRef="Gateway_FleetDestroyedEmptyHeatmap" />
+    <bpmn:sequenceFlow id="Flow_17" name="Да — GAME_OVER" sourceRef="Gateway_FleetDestroyedEmptyHeatmap" targetRef="Task_RecordGameOver" />
+    <bpmn:sequenceFlow id="Flow_18" name="Нет — сбой" sourceRef="Gateway_FleetDestroyedEmptyHeatmap" targetRef="Task_SendSessionAborted" />
+    <bpmn:sequenceFlow id="Flow_19" sourceRef="Task_RecordGameOver" targetRef="Task_SendGameOver" />
+    <bpmn:sequenceFlow id="Flow_20" sourceRef="Task_SendShotNotification" targetRef="Task_ReceiveNotification" />
+    <bpmn:sequenceFlow id="Flow_21" sourceRef="Task_SendGameOver" targetRef="Task_ReceiveNotification" />
+    <bpmn:sequenceFlow id="Flow_22" sourceRef="Task_SendSessionAborted" targetRef="Task_ReceiveNotification" />
+    <bpmn:sequenceFlow id="Flow_23" sourceRef="Task_ReceiveNotification" targetRef="Task_UpdateUi" />
+    <bpmn:sequenceFlow id="Flow_24" sourceRef="Task_UpdateUi" targetRef="Gateway_OutcomeType" />
+    <bpmn:sequenceFlow id="Flow_25" name="Обычное оповещение" sourceRef="Gateway_OutcomeType" targetRef="Task_PlayerReviewShot" />
+    <bpmn:sequenceFlow id="Flow_26" name="GAME_OVER" sourceRef="Gateway_OutcomeType" targetRef="Task_PlayerReviewGameOver" />
+    <bpmn:sequenceFlow id="Flow_27" name="SESSION_ABORTED" sourceRef="Gateway_OutcomeType" targetRef="Task_DeleteSession" />
+    <bpmn:sequenceFlow id="Flow_28" sourceRef="Task_PlayerReviewShot" targetRef="EndEvent_TurnProcessed" />
+    <bpmn:sequenceFlow id="Flow_29" sourceRef="Task_PlayerReviewGameOver" targetRef="EndEvent_GameOver" />
+    <bpmn:sequenceFlow id="Flow_30" sourceRef="Task_DeleteSession" targetRef="EndEvent_SessionAborted" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_BackendTurn">
+
+      <bpmndi:BPMNShape id="Lane_Player_di" bpmnElement="Lane_Player" isHorizontal="true">
+        <dc:Bounds x="120" y="80" width="2480" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Frontend_di" bpmnElement="Lane_Frontend" isHorizontal="true">
+        <dc:Bounds x="120" y="240" width="2480" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Backend_di" bpmnElement="Lane_Backend" isHorizontal="true">
+        <dc:Bounds x="120" y="400" width="2480" height="280" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="StartEvent_BackendTurn_di" bpmnElement="StartEvent_BackendTurn">
+        <dc:Bounds x="180" y="492" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="156" y="535" width="84" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_RecalculateHeatmap_di" bpmnElement="Task_RecalculateHeatmap">
+        <dc:Bounds x="260" y="470" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_WoundedShip_di" bpmnElement="Gateway_WoundedShip" isMarkerVisible="true">
+        <dc:Bounds x="490" y="485" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="470" y="445" width="90" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_HuntMode_di" bpmnElement="Task_HuntMode">
+        <dc:Bounds x="590" y="430" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_TargetMode_di" bpmnElement="Task_TargetMode">
+        <dc:Bounds x="590" y="560" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_HasWeightedCells_di" bpmnElement="Gateway_HasWeightedCells" isMarkerVisible="true">
+        <dc:Bounds x="830" y="485" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="810" y="445" width="90" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_ChooseCell_di" bpmnElement="Task_ChooseCell">
+        <dc:Bounds x="940" y="430" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_FireShot_di" bpmnElement="Task_FireShot">
+        <dc:Bounds x="1160" y="430" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_ShotResult_di" bpmnElement="Gateway_ShotResult" isMarkerVisible="true">
+        <dc:Bounds x="1400" y="445" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1385" y="410" width="80" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_FleetDestroyedAfterSunk_di" bpmnElement="Gateway_FleetDestroyedAfterSunk" isMarkerVisible="true">
+        <dc:Bounds x="1520" y="525" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1500" y="585" width="90" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_CheckVictoryEmptyHeatmap_di" bpmnElement="Task_CheckVictoryEmptyHeatmap">
+        <dc:Bounds x="940" y="560" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_FleetDestroyedEmptyHeatmap_di" bpmnElement="Gateway_FleetDestroyedEmptyHeatmap" isMarkerVisible="true">
+        <dc:Bounds x="1180" y="575" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1160" y="635" width="90" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_RecordGameOver_di" bpmnElement="Task_RecordGameOver">
+        <dc:Bounds x="1640" y="560" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_SendShotNotification_di" bpmnElement="Task_SendShotNotification">
+        <dc:Bounds x="1640" y="430" width="200" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_SendGameOver_di" bpmnElement="Task_SendGameOver">
+        <dc:Bounds x="1880" y="560" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_SendSessionAborted_di" bpmnElement="Task_SendSessionAborted">
+        <dc:Bounds x="1320" y="560" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_DeleteSession_di" bpmnElement="Task_DeleteSession">
+        <dc:Bounds x="2140" y="470" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="EndEvent_SessionAborted_di" bpmnElement="EndEvent_SessionAborted">
+        <dc:Bounds x="2380" y="492" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2350" y="535" width="96" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_ReceiveNotification_di" bpmnElement="Task_ReceiveNotification">
+        <dc:Bounds x="1880" y="280" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_UpdateUi_di" bpmnElement="Task_UpdateUi">
+        <dc:Bounds x="2120" y="280" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Gateway_OutcomeType_di" bpmnElement="Gateway_OutcomeType" isMarkerVisible="true">
+        <dc:Bounds x="2360" y="295" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2340" y="255" width="90" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_PlayerReviewShot_di" bpmnElement="Task_PlayerReviewShot">
+        <dc:Bounds x="2000" y="120" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="EndEvent_TurnProcessed_di" bpmnElement="EndEvent_TurnProcessed">
+        <dc:Bounds x="2220" y="142" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2195" y="185" width="86" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_PlayerReviewGameOver_di" bpmnElement="Task_PlayerReviewGameOver">
+        <dc:Bounds x="2320" y="120" width="180" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="EndEvent_GameOver_di" bpmnElement="EndEvent_GameOver">
+        <dc:Bounds x="2540" y="142" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2515" y="185" width="86" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="Flow_01_di" bpmnElement="Flow_01">
+        <di:waypoint x="216" y="510" />
+        <di:waypoint x="260" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02_di" bpmnElement="Flow_02">
+        <di:waypoint x="440" y="510" />
+        <di:waypoint x="490" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03_di" bpmnElement="Flow_03">
+        <di:waypoint x="515" y="485" />
+        <di:waypoint x="515" y="470" />
+        <di:waypoint x="590" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04_di" bpmnElement="Flow_04">
+        <di:waypoint x="515" y="535" />
+        <di:waypoint x="515" y="600" />
+        <di:waypoint x="590" y="600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05_di" bpmnElement="Flow_05">
+        <di:waypoint x="770" y="470" />
+        <di:waypoint x="855" y="470" />
+        <di:waypoint x="855" y="485" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06_di" bpmnElement="Flow_06">
+        <di:waypoint x="770" y="600" />
+        <di:waypoint x="855" y="600" />
+        <di:waypoint x="855" y="535" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07_di" bpmnElement="Flow_07">
+        <di:waypoint x="880" y="510" />
+        <di:waypoint x="940" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_08_di" bpmnElement="Flow_08">
+        <di:waypoint x="855" y="535" />
+        <di:waypoint x="855" y="600" />
+        <di:waypoint x="940" y="600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09_di" bpmnElement="Flow_09">
+        <di:waypoint x="1120" y="470" />
+        <di:waypoint x="1160" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10_di" bpmnElement="Flow_10">
+        <di:waypoint x="1340" y="470" />
+        <di:waypoint x="1400" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11_di" bpmnElement="Flow_11">
+        <di:waypoint x="1450" y="470" />
+        <di:waypoint x="1640" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12_di" bpmnElement="Flow_12">
+        <di:waypoint x="1425" y="445" />
+        <di:waypoint x="1425" y="400" />
+        <di:waypoint x="1740" y="400" />
+        <di:waypoint x="1740" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13_di" bpmnElement="Flow_13">
+        <di:waypoint x="1425" y="495" />
+        <di:waypoint x="1425" y="550" />
+        <di:waypoint x="1520" y="550" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14_di" bpmnElement="Flow_14">
+        <di:waypoint x="1570" y="550" />
+        <di:waypoint x="1640" y="600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15_di" bpmnElement="Flow_15">
+        <di:waypoint x="1545" y="525" />
+        <di:waypoint x="1545" y="470" />
+        <di:waypoint x="1640" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16_di" bpmnElement="Flow_16">
+        <di:waypoint x="1120" y="600" />
+        <di:waypoint x="1180" y="600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17_di" bpmnElement="Flow_17">
+        <di:waypoint x="1205" y="625" />
+        <di:waypoint x="1205" y="660" />
+        <di:waypoint x="1730" y="660" />
+        <di:waypoint x="1730" y="640" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18_di" bpmnElement="Flow_18">
+        <di:waypoint x="1230" y="600" />
+        <di:waypoint x="1320" y="600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19_di" bpmnElement="Flow_19">
+        <di:waypoint x="1820" y="600" />
+        <di:waypoint x="1880" y="600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_20_di" bpmnElement="Flow_20">
+        <di:waypoint x="1840" y="470" />
+        <di:waypoint x="1860" y="470" />
+        <di:waypoint x="1860" y="320" />
+        <di:waypoint x="1880" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_21_di" bpmnElement="Flow_21">
+        <di:waypoint x="2060" y="600" />
+        <di:waypoint x="2080" y="600" />
+        <di:waypoint x="2080" y="360" />
+        <di:waypoint x="1970" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_22_di" bpmnElement="Flow_22">
+        <di:waypoint x="1500" y="600" />
+        <di:waypoint x="1500" y="360" />
+        <di:waypoint x="1880" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_23_di" bpmnElement="Flow_23">
+        <di:waypoint x="2060" y="320" />
+        <di:waypoint x="2120" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_24_di" bpmnElement="Flow_24">
+        <di:waypoint x="2300" y="320" />
+        <di:waypoint x="2360" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_25_di" bpmnElement="Flow_25">
+        <di:waypoint x="2385" y="295" />
+        <di:waypoint x="2385" y="220" />
+        <di:waypoint x="2090" y="220" />
+        <di:waypoint x="2090" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_26_di" bpmnElement="Flow_26">
+        <di:waypoint x="2410" y="320" />
+        <di:waypoint x="2450" y="320" />
+        <di:waypoint x="2450" y="240" />
+        <di:waypoint x="2410" y="240" />
+        <di:waypoint x="2410" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_27_di" bpmnElement="Flow_27">
+        <di:waypoint x="2385" y="345" />
+        <di:waypoint x="2385" y="400" />
+        <di:waypoint x="2230" y="400" />
+        <di:waypoint x="2230" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_28_di" bpmnElement="Flow_28">
+        <di:waypoint x="2180" y="160" />
+        <di:waypoint x="2220" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_29_di" bpmnElement="Flow_29">
+        <di:waypoint x="2500" y="160" />
+        <di:waypoint x="2540" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_30_di" bpmnElement="Flow_30">
+        <di:waypoint x="2320" y="510" />
+        <di:waypoint x="2380" y="510" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -112,6 +112,7 @@ Use Cases (Cockburn) этого проекта — через `/uc` (скилл 
 `Axxxx` важнее предварительного ТЗ при конфликте; не путать с `MR-01`…`MR-07` (правила измерения НФТ).
 Детали согласования ФТ/НФТ/QC — в скиллах `/ft`, `/nft`, `/qc-ft-nft`.
 Детали User Stories — в скилле `/us` (`skill-us`); Use Cases — в скилле `/uc` (`skill-uc`); контроль качества US/UC — `/qc-us-uc` (`skill-quality-control-us-uc`).
+BPMN для bpmn.io — `/diagram-bpmn` (`skill-diagram-bpmn`): файлы `diagrams/bpmn-NNN.bpmn`.
 
 ## 7. Правила работы с файлами
 
