@@ -12,3 +12,4 @@
 | `/qc-ft-nft` | `.cursor/commands/qc-ft-nft.md` | Проверить качество ФТ и НФТ по `.cursor/skills/skill-quality-control-ft-nft.md` |
 | `/qc-us-uc` | `.cursor/commands/qc-us-uc.md` | Проверить качество US и UC по `.cursor/skills/skill-quality-control-us-uc.md` |
 | `/diagram-bpmn` | `.cursor/commands/diagram-bpmn.md` | Моделировать бизнес-процесс в BPMN 2.0 для bpmn.io по `.cursor/skills/skill-diagram-bpmn.md` |
+| `/diagram-mermaid` | `.cursor/commands/diagram-mermaid.md` | Mermaid: flowchart, DFD, classDiagram, sequenceDiagram, C4 по `.cursor/skills/skill-diagram-mermaid.md` |
