@@ -114,6 +114,7 @@ Use Cases (Cockburn) этого проекта — через `/uc` (скилл 
 Детали User Stories — в скилле `/us` (`skill-us`); Use Cases — в скилле `/uc` (`skill-uc`); контроль качества US/UC — `/qc-us-uc` (`skill-quality-control-us-uc`).
 BPMN для bpmn.io — `/diagram-bpmn` (`skill-diagram-bpmn`): файлы `diagrams/bpmn-NNN.bpmn`.
 Mermaid — `/diagram-mermaid` (`skill-diagram-mermaid`): flowchart, DFD, classDiagram, sequenceDiagram, C4; файлы `diagrams/diagram-mermaid-NNN.md` (пояснения перед диаграммой).
+Доменная модель (DDD) — `/ddd` (`skill-ddd`): `requirements/domain-model.md`; в конце прогона обязателен аудит `/review-ddd` (`skill-review-ddd`). Самостоятельный аудит готовой модели — только `/review-ddd`.
 
 ## 7. Правила работы с файлами
 
