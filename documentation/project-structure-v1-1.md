@@ -1,13 +1,24 @@
 ## 1. Структура папок и файлов проекта (Cursor)
 
-* `documentation` — файлы ТЗ и материалы разработчика по проекту.
-* `requirements` — файлы `functional-requirements.md`, `non-functional-requirements.md`, `answers-project.md` (закрытые ответы `Axxxx`), `glossary.md`; целевые (создаются по необходимости): `domain-model.md`, папки `user-stories` и `use-cases`.
-* `diagrams` — архитектурные и логические диаграммы (PlantUML / Mermaid / BPMN); целевая папка, создаётся по необходимости.
+После создания **новой папки** или **нового рабочего файла** проекта обновить `.cursor/rules/rule-structure.mdc` и эту копию. Экземпляры уже описанного шаблона именования (`us-NNN`, `uc-NNN`, `diagram-*-NNN`, `bpmn-NNN`) в список по одному не добавлять.
+
+Корневые ориентиры:
+
+* `README.md` — входной документ: как открыть окно фронтенда и документацию API, иерархия источников.
+* `AGENTS.md` — правила поведения агента аналитика.
+* `.cursor/list-commands.md` — актуальный список команд Cursor, скиллов и агентов. При создании нового скилла, команды или агента ИИ обязан обновить этот файл.
+
+Папки и рабочие файлы:
+
+* `documentation` — файлы ТЗ и материалы разработчика (`specification-sea-battle-v1-1.md`, `project-structure-v1-1.md`; последний синхронизируется с `.cursor/rules/rule-structure.mdc`).
+* `requirements` — `functional-requirements.md`, `non-functional-requirements.md`, `answers-project.md` (закрытые ответы `Axxxx`), `glossary.md`, `domain-model.md`, `data-dictionary.md`, `openapi.yaml`; папки `user-stories` и `use-cases`; скрипты просмотра API: `run-openapi-docs.bat`, `preview-openapi.py`.
+* `diagrams` — архитектурные и логические диаграммы (PlantUML / Mermaid / BPMN).
 * `.cursor/skills` — промпты и инструкции для AI.
 * `.cursor/rules` — правила для AI.
-* `.cursor/commands` — команды Cursor (`/ft`, `/nft`, `/qc-ft-nft`, `/pin-memory` и др.).
-* `src` — исходный код MVP, скрипты, настройки; целевая папка, создаётся по необходимости.
-* `reports` — файлы с отчётами.
+* `.cursor/commands` — команды Cursor (`/ft`, `/nft`, `/us`, `/uc`, `/qc-ft-nft`, `/qc-us-uc`, `/diagram-bpmn`, `/diagram-mermaid`, `/ddd`, `/review-ddd`, `/data-dictionary`, `/ui-prototyping`, `/openai`, `/pin-memory` и др.).
+* `.cursor/agents` — файлы агентов; целевая папка, создаётся по необходимости.
+* `src` — исходный код MVP, скрипты, настройки (прототип фронтенда, `run-frontend.bat`).
+* `reports` — отчёты: `agent-memory.md` (память агента), `incompatibility-ft-nft.md` (QC ФТ/НФТ), `incompatibility-us-uc.md` (QC US/UC), `domain-model-review.md` (аудит DDD).
 * `artifacts` — артефакты проекта, кроме тех, что указаны для папки requirements; целевая папка, создаётся по необходимости.
 * `test-data` — зарезервирована на будущее; использовать только по прямому заданию разработчика; целевая папка.
 * `tests` — автотесты для тестирования кода; целевая папка, создаётся по необходимости.
@@ -18,11 +29,15 @@
 
 ## 2. Правила именования файлов (Naming Conventions)
 
-* **User Stories (US):** Префикс `us-` + трехзначный порядковый номер + название фичи через дефис. Пример: `us-001-auth.md`, `us-002-payment.md`.
-* **Use Cases (UC):** Префикс `uc-` + трехзначный порядковый номер + название сценария через дефис. Пример: `uc-001-login.md`, `uc-002-checkout.md`.
-* **Скиллы:** Префикс `skill-` + название в lowercase через дефис. Пример: `skill-ft.md`.
-* **Правила:** Префикс `rule-` + название. Примеры: `rule-structure.mdc`, `rule-answers-project.mdc`, `rule-analyst-self-learning.mdc`, `rule-propose-qc-ft-nft.mdc`.
-* **Агенты:** Префикс `agent-` + название агента. Пример: `agent-analyst.md`. При появлении файлов агентов.
+* **User Stories (US):** префикс `us-` + трехзначный порядковый номер + название фичи через дефис. Пример: `us-001-auth.md`. Папка `requirements/user-stories/`. Реестр историй: `us-registry.md`. Роли и права: `list-us.md`.
+* **Use Cases (UC):** префикс `uc-` + трехзначный порядковый номер + название сценария через дефис. Пример: `uc-001-login.md`. Папка `requirements/use-cases/`. Реестр и вопросы: `list-uc.md`.
+* **Словарь данных:** `data-dictionary.md` в `requirements/`.
+* **OpenAPI:** `openapi.yaml` в `requirements/`.
+* **Диаграммы:** папка `diagrams/`. Если пользователь задал имя файла — сохранить его (например `diagram-dfd-001.md`, `diagram-class-001.md`). Если имя не задано — `diagram-mermaid-NNN.md`. BPMN 2.0: `bpmn-NNN.bpmn`. Новый предмет моделирования — новый номер; пересоздание той же диаграммы — тот же файл.
+* **Отчёты:** папка `reports/`. Память агента: `agent-memory.md`. QC ФТ/НФТ: `incompatibility-ft-nft.md`. QC US/UC: `incompatibility-us-uc.md`. Аудит DDD: `domain-model-review.md`.
+* **Скиллы:** префикс `skill-` + название в lowercase через дефис. Пример: `skill-ft.md`.
+* **Правила:** префикс `rule-` + название. Примеры: `rule-structure.mdc`, `rule-answers-project.mdc`, `rule-analyst-self-learning.mdc`, `rule-propose-qc-ft-nft.mdc`, `rule-propose-qc-us-uc.mdc`.
+* **Агенты:** префикс `agent-` + название агента. Пример: `agent-analyst.md`. При появлении файлов агентов — в `.cursor/agents`.
 * файл со списком всех команд запуска скиллов `list-commands.md`. Содержит актуальный список CLI-команд, скриптов запуска скиллов, команд Cursor и агентов. При создании нового скилла, команды или агента ИИ обязан автоматически обновлять этот файл. Находится в папке `.cursor`.
 
 ---
@@ -31,3 +46,4 @@
 
 * legacy, old-skills — строго исключены из сохранения в коммиты, репозитории и от индексации ИИ (внесены в .gitignore и .cursorignore). ИИ запрещено самостоятельно читать эти папки, если разработчик явно не прикрепил файл оттуда через символ @.
 * diagrams — только текстовые форматы диаграмм (.puml для PlantUML, блоки кода в .md для Mermaid, BPMN 2.0 XML для импорта в bpmn.io). Бинарные файлы и картинки не используются для актуализации, но могут создаваться по запросу разработчика.
+* **Markdown и fenced `text`:** в любых `.md` файлах проекта **запрещено** использовать обёртку ` ```text ` … ` ``` ` (и пустой fence ` ``` ` без языка для длинных цитат/шаблонов, если цель — «просто текст»). Причина: в MarkText и похожих редакторах появляется горизонтальная прокрутка, файлы неудобно читать. Пиши обычным markdown-текстом. Допустимы fence с осмысленным языком там, где нужен код/диаграмма (`mermaid`, `puml`, фрагменты исходников и т.п.), но **не** `text`. В User Stories критерии приёмки (Gherkin) — тоже без fence (`Given` / `When` / `Then` обычным текстом).

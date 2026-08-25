@@ -51,13 +51,14 @@ python preview-openapi.py
 | Папка / файл | Назначение | Статус | Коммит / репозиторий | Индексация ИИ |
 | --- | --- | --- | --- | --- |
 | `documentation` | ТЗ и материалы разработчика | есть | да | да |
-| `requirements` | `functional-requirements.md`, `non-functional-requirements.md`, `answers-project.md` (`Axxxx`), `glossary.md`; целевые: `domain-model.md`, `user-stories/`, `use-cases/` | есть (базовые файлы) | да | да |
-| `diagrams` | текстовые диаграммы (PlantUML / Mermaid / BPMN) | целевая | да (текст) | да (текст; картинки и бинарники — нет) |
+| `requirements` | `functional-requirements.md`, `non-functional-requirements.md`, `answers-project.md` (`Axxxx`), `glossary.md`, `domain-model.md`, `data-dictionary.md`, `openapi.yaml`; `user-stories/`, `use-cases/`; `run-openapi-docs.bat`, `preview-openapi.py` | есть | да | да |
+| `diagrams` | текстовые диаграммы (PlantUML / Mermaid / BPMN) | есть | да (текст) | да (текст; картинки и бинарники — нет) |
 | `.cursor/skills` | промпты и инструкции для AI | есть | да | да |
 | `.cursor/rules` | правила для AI | есть | да | да |
-| `.cursor/commands` | команды Cursor (`/ft`, `/nft`, `/qc-ft-nft`, `/pin-memory`) | есть | да | да |
-| `src` | исходный код MVP, скрипты, настройки | целевая | да | да |
-| `reports` | отчёты; в т.ч. `agent-memory.md` | есть | да | да |
+| `.cursor/commands` | команды Cursor (`/ft`, `/nft`, `/us`, `/uc`, `/qc-ft-nft`, `/openai`, `/pin-memory` и др.) | есть | да | да |
+| `.cursor/agents` | файлы агентов | целевая | да | да |
+| `src` | исходный код MVP, скрипты, настройки (`run-frontend.bat`, пакет `frontend`) | есть | да | да |
+| `reports` | отчёты: `agent-memory.md`, `incompatibility-ft-nft.md`, `incompatibility-us-uc.md`, `domain-model-review.md` | есть | да | да |
 | `artifacts` | артефакты вне `requirements` | целевая | да | да |
 | `tests` | автотесты | целевая | да | да |
 | `test-data` | зарезервирована; только по прямому заданию разработчика | целевая | да | да |

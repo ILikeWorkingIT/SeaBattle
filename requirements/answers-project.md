@@ -168,3 +168,5 @@
 | A0158 | API | Сериализация времени: ISO-8601 UTC и TTL в секундах? | `ttlAnchor` — ISO-8601 UTC (`date-time`); idle TTL и остаток — неотрицательные целые секунды (30 мин = 1800). Формат показа остатка на UI свободный (FT-080, A0120). |
 | A0159 | API | Округление `avgShots` (A0134): как в JSON? | JSON number без отдельного правила округления; показ округления — на Фронтенде. Поля снимка: `games`, `playerWins`, `backendWins`, `avgShots`. |
 | A0160 | API | Порт API `8000` в `servers.url`? | Оставить `http://localhost:8000` до появления бэкенда. |
+| A0161 | DD | Утвердить словарь данных `requirements/data-dictionary.md`? | Утверждаю `requirements/data-dictionary.md` как есть на 2026-08-25. |
+| A0162 | GLOSS | Утвердить глоссарий `requirements/glossary.md`? | Утверждаю `requirements/glossary.md` как есть на 2026-08-25. |
