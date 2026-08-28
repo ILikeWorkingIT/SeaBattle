@@ -11,10 +11,10 @@
 | `/uc` | `.cursor/commands/uc.md` | Написать или обновить Use Cases (Cockburn) по `.cursor/skills/skill-uc.md` |
 | `/qc-ft-nft` | `.cursor/commands/qc-ft-nft.md` | Проверить качество ФТ и НФТ по `.cursor/skills/skill-quality-control-ft-nft.md` |
 | `/qc-us-uc` | `.cursor/commands/qc-us-uc.md` | Проверить качество US и UC по `.cursor/skills/skill-quality-control-us-uc.md` |
+| `/qc-ddd` | `.cursor/commands/qc-ddd.md` | Проверить качество DDD-модели по `.cursor/skills/skill-quality-control-ddd.md` |
 | `/diagram-bpmn` | `.cursor/commands/diagram-bpmn.md` | Моделировать бизнес-процесс в BPMN 2.0 для bpmn.io по `.cursor/skills/skill-diagram-bpmn.md` |
 | `/diagram-mermaid` | `.cursor/commands/diagram-mermaid.md` | Mermaid: flowchart, DFD, classDiagram, sequenceDiagram, C4 по `.cursor/skills/skill-diagram-mermaid.md` |
-| `/ddd` | `.cursor/commands/ddd.md` | Доменная модель (DDD) по `.cursor/skills/skill-ddd.md`; в конце обязательно ревью `.cursor/skills/skill-review-ddd.md` |
-| `/review-ddd` | `.cursor/commands/review-ddd.md` | Критический аудит DDD-модели по `.cursor/skills/skill-review-ddd.md` (самостоятельный режим: только отчёт) |
+| `/ddd` | `.cursor/commands/ddd.md` | Доменная модель (DDD) по `.cursor/skills/skill-ddd.md`; в конце обязательно `/qc-ddd` (`.cursor/skills/skill-quality-control-ddd.md`) |
 | `/data-dictionary` | `.cursor/commands/data-dictionary.md` | Словарь данных (поля, типы, ограничения, MVP) по `.cursor/skills/skill-data-dictionary.md`; после записи файла обязателен гейт проверки до отчёта |
 | `/ui-prototyping` | `.cursor/commands/ui-prototyping.md` | Интерактивный макет окна фронтенда по `.cursor/skills/skill-ui-prototyping.md` |
 | `/openai` | `.cursor/commands/openai.md` | OpenAPI-спецификация (YAML, Swagger UI + ReDoc) по `.cursor/skills/skill-openai.md`; после записи файла обязателен гейт проверки и просмотрщики |
@@ -34,6 +34,24 @@
 3. Снова та же QC-команда и в том же сообщении ответы либо «обработай ответы из отчёта».
 
 Для `/qc-us-uc`: «проверь и исправь» в одном запросе — сначала отчёт, сразу правятся только пункты типа «Исправление» (данных в источниках уже достаточно). Строки-вопросы без ответа догадкой не закрываются.
+
+Если в одном сообщении и «проверь», и ответы — сначала перенос ответов, новый полный аудит сам не начинается. Новый QC — только по явной просьбе или если появились новые требования / истории / сценарии сверх того отчёта.
+
+## Режимы `/qc-ddd`
+
+Отдельной подкоманды нет: режим выбирается по содержимому запроса.
+
+**Отчёт без правок** — когда ещё нечего вносить в модель. Типично: пустой `/qc-ddd`, «проверь модель», «аудит DDD». Агент пишет `reports/domain-model-review.md`, файл `requirements/domain-model.md` не меняет.
+
+**Перенос §4** — когда есть явное согласие: в чате («согласен», «внеси», «примени §4») или просьба обработать выводы отчёта. Агент переносит в модель только разрешённый набор из скилла, записывает закрытые пары в `requirements/answers-project.md` (`Axxxx`, код `DDD`), повторный `/qc-ddd` по тем же правкам не предлагает.
+
+Практический цикл самостоятельного QC:
+
+1. `/qc-ddd` — получить отчёт.
+2. Ответить в чате (согласие на §4 или точечные ответы).
+3. Снова `/qc-ddd` в том же сообщении с согласием либо «обработай ответы из отчёта».
+
+После `/ddd` отдельную команду `/qc-ddd` ждать не нужно: скилл написания модели сам выполняет один проход QC в режиме «после /ddd».
 
 Если в одном сообщении и «проверь», и ответы — сначала перенос ответов, новый полный аудит сам не начинается. Новый QC — только по явной просьбе или если появились новые требования / истории / сценарии сверх того отчёта.
 

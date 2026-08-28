@@ -15,7 +15,7 @@
 * `diagrams` — архитектурные и логические диаграммы (PlantUML / Mermaid / BPMN).
 * `.cursor/skills` — промпты и инструкции для AI.
 * `.cursor/rules` — правила для AI.
-* `.cursor/commands` — команды Cursor (`/ft`, `/nft`, `/us`, `/uc`, `/qc-ft-nft`, `/qc-us-uc`, `/diagram-bpmn`, `/diagram-mermaid`, `/ddd`, `/review-ddd`, `/data-dictionary`, `/ui-prototyping`, `/openai`, `/pin-memory` и др.).
+* `.cursor/commands` — команды Cursor (`/ft`, `/nft`, `/us`, `/uc`, `/qc-ft-nft`, `/qc-us-uc`, `/qc-ddd`, `/diagram-bpmn`, `/diagram-mermaid`, `/ddd`, `/data-dictionary`, `/ui-prototyping`, `/openai`, `/pin-memory` и др.).
 * `.cursor/agents` — файлы агентов; целевая папка, создаётся по необходимости.
 * `src` — исходный код MVP, скрипты, настройки (прототип фронтенда, `run-frontend.bat`).
 * `reports` — отчёты: `agent-memory.md` (память агента), `incompatibility-ft-nft.md` (QC ФТ/НФТ), `incompatibility-us-uc.md` (QC US/UC), `domain-model-review.md` (аудит DDD).

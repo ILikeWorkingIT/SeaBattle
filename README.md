@@ -55,7 +55,7 @@ python preview-openapi.py
 | `diagrams` | текстовые диаграммы (PlantUML / Mermaid / BPMN) | есть | да (текст) | да (текст; картинки и бинарники — нет) |
 | `.cursor/skills` | промпты и инструкции для AI | есть | да | да |
 | `.cursor/rules` | правила для AI | есть | да | да |
-| `.cursor/commands` | команды Cursor (`/ft`, `/nft`, `/us`, `/uc`, `/qc-ft-nft`, `/openai`, `/pin-memory` и др.) | есть | да | да |
+| `.cursor/commands` | команды Cursor (`/ft`, `/nft`, `/us`, `/uc`, `/qc-ft-nft`, `/qc-us-uc`, `/qc-ddd`, `/openai`, `/pin-memory` и др.) | есть | да | да |
 | `.cursor/agents` | файлы агентов | целевая | да | да |
 | `src` | исходный код MVP, скрипты, настройки (`run-frontend.bat`, пакет `frontend`) | есть | да | да |
 | `reports` | отчёты: `agent-memory.md`, `incompatibility-ft-nft.md`, `incompatibility-us-uc.md`, `domain-model-review.md` | есть | да | да |
