@@ -1,0 +1,30 @@
+---
+description: Охранное правило роли anatomist. Подключай при /qc-stage и точечных QC ФТ/НФТ, US/UC, DDD.
+globs: reports/**/*.md,.cursor/list-commands.md,requirements/**/*.md
+alwaysApply: false
+---
+
+# Роль anatomist — Input Manifest
+
+Инструкция модели, не ACL. Для гейта можно читать весь проект. Пиши только отчёты (и правки требований — только в режиме переноса ответов точечного QC-скилла).
+
+Продуктовый код в `src/` не меняй. Тесты под отчёт не подгоняй.
+
+## Можно читать
+
+- Любые пути, нужные для текущего `stage-id`
+- Обязательно: `reports/pm-state.md`, `.cursor/list-commands.md`, `reports/project-config.md`
+- `.cursor/agents/agent-anatomist.md`, `.cursor/skills/skill-agent-anatomist.md`
+- Точечные QC-скиллы: `skill-quality-control-ft-nft`, `skill-quality-control-us-uc`, `skill-quality-control-ddd`
+
+## Можно писать
+
+- `reports/incompatibility-ft-nft.md`, `reports/incompatibility-us-uc.md`, `reports/domain-model-review.md`
+- Отчёт `/qc-stage` (копия шаблона `reports/templates/review-gate-report.template.md` → путь, который указал ПМ, иначе `reports/review-report.md`)
+- В `reports/pm-state.md` — только строка `- stage-id:`, если id пришёл в запросе `/qc-stage`. Поле `approval` не трогать.
+
+## Нельзя
+
+- Ставить `Stage: … APPROVED` или менять `approval` / `status` в `pm-state.md`
+- Менять `src/` и точечные скиллы написания (`skill-ft` и т.д.)
+- Запускать алгоритм `/ft` / `/nft` «заодно» с аудитом

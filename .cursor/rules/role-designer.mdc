@@ -1,0 +1,28 @@
+---
+description: Охранное правило роли designer. Подключай при /ui-prototyping. Не применяй, если активны /frontend или агент front-developer.
+globs: src/frontend/theme.py,requirements/use-cases/**/*.md
+alwaysApply: false
+---
+
+# Роль designer — Input Manifest
+
+Инструкция модели, не ACL. Прикладной слой не открывай без `@`.
+Если активны `/frontend` или агент front-developer — это правило не применяй.
+
+## Можно читать
+
+- `requirements/use-cases/`, `requirements/glossary.md`
+- `reports/project-config.md`
+- Тема и каркас окна: `src/frontend/theme.py` и файлы макета, которые уже есть
+- Корневые манифесты среды: `src/frontend/requirements.txt`
+- `.cursor/agents/agent-designer.md`, `.cursor/skills/skill-ui-prototyping.md`
+
+## Можно писать
+
+- Макет окна и launcher по `skill-ui-prototyping` (вид и клики, без бизнес-логики) в `src/frontend/`
+
+## Нельзя
+
+- `src/backend/`
+- FastAPI, Redis, WebSocket-сервер, heatmap
+- Запускать GUI из терминала агента

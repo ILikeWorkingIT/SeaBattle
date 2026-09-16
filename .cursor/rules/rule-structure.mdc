@@ -11,25 +11,26 @@ alwaysApply: true
 Корневые ориентиры:
 
 * `README.md` — входной документ: как открыть окно фронтенда и документацию API, иерархия источников.
-* `AGENTS.md` — правила поведения агента аналитика.
+* `AGENTS.md` — общие инварианты агента и MAS.
 * `.cursor/list-commands.md` — актуальный список команд Cursor, скиллов и агентов. При создании нового скилла, команды или агента ИИ обязан обновить этот файл.
 
 Папки и рабочие файлы:
 
-* `documentation` — файлы ТЗ и материалы разработчика (`specification-sea-battle-v1-1.md`, `project-structure-v1-1.md`; последний синхронизируется с этим правилом).
+* `documentation` — файлы ТЗ и материалы разработчика (`specification-sea-battle-v1-1.md`, `project-structure-v1-1.md`, `mas-description.md`; структура синхронизируется с этим правилом).
 * `requirements` — `functional-requirements.md`, `non-functional-requirements.md`, `answers-project.md` (закрытые ответы `Axxxx`), `glossary.md`, `domain-model.md`, `data-dictionary.md`, `openapi.yaml`; папки `user-stories` и `use-cases`; скрипты просмотра API: `run-openapi-docs.bat`, `preview-openapi.py`.
 * `diagrams` — архитектурные и логические диаграммы (PlantUML / Mermaid / BPMN).
 * `.cursor/skills` — промпты и инструкции для AI.
-* `.cursor/rules` — правила для AI.
-* `.cursor/commands` — команды Cursor (`/ft`, `/nft`, `/us`, `/uc`, `/qc-ft-nft`, `/qc-us-uc`, `/qc-ddd`, `/diagram-bpmn`, `/diagram-mermaid`, `/ddd`, `/data-dictionary`, `/ui-prototyping`, `/openai`, `/pin-memory` и др.).
-* `.cursor/agents` — файлы агентов; целевая папка, создаётся по необходимости.
-* `src` — исходный код MVP, скрипты, настройки (прототип фронтенда, `run-frontend.bat`).
-* `reports` — отчёты: `agent-memory.md` (память агента), `incompatibility-ft-nft.md` (QC ФТ/НФТ), `incompatibility-us-uc.md` (QC US/UC), `domain-model-review.md` (аудит DDD).
-* `artifacts` — артефакты проекта, кроме тех, что указаны для папки requirements; целевая папка, создаётся по необходимости.
+* `.cursor/rules` — правила для AI (`rule-*`, `role-*`).
+* `.cursor/commands` — команды Cursor (`/pm`, `/ft`, `/nft`, `/us`, `/uc`, `/qc-ft-nft`, `/qc-us-uc`, `/qc-ddd`, `/qc-stage`, `/diagram-bpmn`, `/diagram-mermaid`, `/ddd`, `/data-dictionary`, `/ui-prototyping`, `/frontend`, `/app-layer`, `/openai`, `/new-tests`, `/use-tests`, `/vision`, `/gost-3460289`, `/pin-memory` и др.).
+* `.cursor/agents` — Custom Agents MAS (`agent-pm`, `agent-analyst`, …).
+* `src` — исходный код MVP: прототип фронтенда PySide6 (`src/frontend/`, `run-frontend.bat`); бэкенд FastAPI+Redis — `src/backend/` (создаётся по `/app-layer`).
+* `reports` — отчёты MAS и QC: `agent-memory.md`, `project-config.md`, `pm-state.md`, `navigator.md`, `templates/`, `incompatibility-ft-nft.md`, `incompatibility-us-uc.md`, `domain-model-review.md`, `review-report.md`, `test-run.md`; каркас `daily/`, `weekly/`, `commit-audit/`, `release/`.
+* `artifacts` — Vision & Scope, ТЗ по ГОСТ и прочие артефакты вне `requirements`.
 * `test-data` — зарезервирована на будущее; использовать только по прямому заданию разработчика; целевая папка.
 * `tests` — автотесты для тестирования кода; целевая папка, создаётся по необходимости.
-* `legacy` — при наличии папки исходники другого проекта и аналитика по нему, использовать только по прямому заданию разработчика (исключено из репозитория).
-* `old-skills` — скиллы из другого проекта, использовать только по прямому заданию разработчика (исключено из репозитория).
+* `legacy` — исходники и аналитика другого проекта; не в Git; агент работает с ней только по явной команде и прикреплению через `@` (исключено из репозитория и индексации).
+* `old-skills` — скиллы из другого проекта; не в Git; агент работает с ней только по явной команде и прикреплению через `@` (исключено из репозитория и индексации).
+* `imports` — копия чужого репозитория для переноса методологии; не в Git; тот же режим доступа, что у `legacy/` (`@` + явная команда).
 
 ---
 
@@ -40,16 +41,16 @@ alwaysApply: true
 * **Словарь данных:** `data-dictionary.md` в `requirements/`.
 * **OpenAPI:** `openapi.yaml` в `requirements/`.
 * **Диаграммы:** папка `diagrams/`. Если пользователь задал имя файла — сохранить его (например `diagram-dfd-001.md`, `diagram-class-001.md`). Если имя не задано — `diagram-mermaid-NNN.md`. BPMN 2.0: `bpmn-NNN.bpmn`. Новый предмет моделирования — новый номер; пересоздание той же диаграммы — тот же файл.
-* **Отчёты:** папка `reports/`. Память агента: `agent-memory.md`. QC ФТ/НФТ: `incompatibility-ft-nft.md`. QC US/UC: `incompatibility-us-uc.md`. Аудит DDD: `domain-model-review.md`.
-* **Скиллы:** префикс `skill-` + название в lowercase через дефис. Пример: `skill-ft.md`.
-* **Правила:** префикс `rule-` + название. Примеры: `rule-structure.mdc`, `rule-answers-project.mdc`, `rule-analyst-self-learning.mdc`, `rule-propose-qc-ft-nft.mdc`, `rule-propose-qc-us-uc.mdc`.
-* **Агенты:** префикс `agent-` + название агента. Пример: `agent-analyst.md`. При появлении файлов агентов — в `.cursor/agents`.
+* **Отчёты:** папка `reports/`. Память агента: `agent-memory.md`. Конфиг MAS: `project-config.md`, `pm-state.md`, `navigator.md`. QC ФТ/НФТ: `incompatibility-ft-nft.md`. QC US/UC: `incompatibility-us-uc.md`. Аудит DDD: `domain-model-review.md`. Гейт стадии: `review-report.md`. Прогон тестов: `test-run.md`. Шаблоны: `reports/templates/`.
+* **Скиллы:** префикс `skill-` + название в lowercase через дефис. Пример: `skill-ft.md`. Маршрутизаторы ролей: `skill-agent-<роль>.md`.
+* **Правила:** префикс `rule-` + название или `role-` + роль. Примеры: `rule-structure.mdc`, `rule-answers-project.mdc`, `rule-python.mdc`, `role-pm.mdc`.
+* **Агенты:** префикс `agent-` + название агента. Пример: `agent-analyst.md`. Файлы — в `.cursor/agents`.
 * файл со списком всех команд запуска скиллов `list-commands.md`. Содержит актуальный список CLI-команд, скриптов запуска скиллов, команд Cursor и агентов. При создании нового скилла, команды или агента ИИ обязан автоматически обновлять этот файл. Находится в папке `.cursor`.
 
 ---
 
 ## 3. Ограничения папок и файлов проекта
 
-* legacy, old-skills — строго исключены из сохранения в коммиты, репозитории и от индексации ИИ (внесены в .gitignore и .cursorignore). ИИ запрещено самостоятельно читать эти папки, если разработчик явно не прикрепил файл оттуда через символ @.
+* legacy, old-skills, imports — строго исключены из Git и из индексации ИИ (`.gitignore`, `.cursorignore`). Агенту запрещено самостоятельно открывать, искать, читать или править эти папки. Разрешено только при одновременном выполнении обоих условий: (1) явная команда разработчика в чате; (2) прикрепление папки или файла из них через `@`. Без `@` или без явной команды — не трогать.
 * diagrams — только текстовые форматы диаграмм (.puml для PlantUML, блоки кода в .md для Mermaid, BPMN 2.0 XML для импорта в bpmn.io). Бинарные файлы и картинки не используются для актуализации, но могут создаваться по запросу разработчика.
 * **Markdown и fenced `text`:** в любых `.md` файлах проекта **запрещено** использовать обёртку ` ```text ` … ` ``` ` (и пустой fence ` ``` ` без языка для длинных цитат/шаблонов, если цель — «просто текст»). Причина: в MarkText и похожих редакторах появляется горизонтальная прокрутка, файлы неудобно читать. Пиши обычным markdown-текстом. Допустимы fence с осмысленным языком там, где нужен код/диаграмма (`mermaid`, `puml`, фрагменты исходников и т.п.), но **не** `text`. В User Stories критерии приёмки (Gherkin) — тоже без fence (`Given` / `When` / `Then` обычным текстом).

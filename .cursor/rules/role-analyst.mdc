@@ -1,0 +1,31 @@
+---
+description: Охранное правило роли analyst. Подключай при работе агента analyst или с файлами requirements/ и diagrams/.
+globs: requirements/**/*.md,diagrams/**/*,documentation/**/*.md
+alwaysApply: false
+---
+
+# Роль analyst — Input Manifest
+
+Инструкция модели, не ACL. Не читай `src/` и `tests/`, если пользователь не приложил файл через `@`.
+
+## Можно читать
+
+- `requirements/`
+- `documentation/` (канон ТЗ — `documentation/specification-sea-battle-v1-1.md`; не выдумывай `Specification.md`)
+- `diagrams/`
+- `artifacts/vision-scope.md` — только чтение (границы продукта); запись — роль tech-writer
+- `reports/project-config.md`
+- `.cursor/agents/agent-analyst.md`
+- `.cursor/skills/skill-ft.md`, `skill-us.md`, `skill-uc.md`, `skill-diagram-bpmn.md`, `skill-diagram-mermaid.md`
+
+## Можно писать
+
+- Файлы в `requirements/` и `diagrams/` по точечным скиллам роли
+- `requirements/answers-project.md` — только закрытые пары (коды `FT`, `US`, `UC` и др. по теме; не `VS`)
+
+## Нельзя
+
+- `src/`, `tests/`
+- Запись `artifacts/vision-scope.md` и выполнение `skill-vision` / `/vision` (владелец — tech-writer)
+- `/nft`, `/ddd`, `/openai` без явного поручения ПМ на совместную работу
+- Запускать QC без согласия

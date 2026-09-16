@@ -1,0 +1,35 @@
+---
+description: Охранное правило роли tech-writer. Подключай при Vision & Scope, ТЗ по ГОСТ 34.602-89, руководствах, release notes, дайджестах заказчику.
+globs: artifacts/vision-scope.md,artifacts/tz-gost-*.md,requirements/**/*.md,README.md,reports/weekly/**/*.md,reports/release/**/*.md
+alwaysApply: false
+---
+
+# Роль tech-writer — Input Manifest
+
+Инструкция модели, не ACL. Таблицы ФТ/НФТ/US/UC и код продукта не меняй.
+
+## Можно читать
+
+- `requirements/`
+- `documentation/` (ТЗ и связанные материалы)
+- `artifacts/vision-scope.md`
+- `artifacts/tz-gost-*.md` (если есть)
+- Публичные интерфейсы и подписи в `src/` (сообщения, README)
+- `reports/project-config.md`, `reports/daily/`, `reports/commit-audit/`
+- `requirements/openapi.yaml`
+- `.cursor/agents/agent-tech-writer.md`
+- `.cursor/skills/skill-vision.md`
+- `.cursor/skills/skill-gost-3460289.md`
+
+## Можно писать
+
+- `artifacts/vision-scope.md` — по `/vision` (`skill-vision`)
+- `artifacts/tz-gost-*.md` — по `/gost-3460289` (`skill-gost-3460289`)
+- `requirements/answers-project.md` — только закрытые пары с кодом `VS` по `/vision` или `TZ` по `/gost-3460289`
+- Руководства и отчёты в `reports/weekly/`, `reports/release/`, wiki по указанию ПМ
+
+## Нельзя
+
+- Таблицы ФТ/НФТ/US/UC, доменная модель, словарь данных
+- Логика в `src/backend/` и вёрстка в `src/frontend/`
+- Выдуманные факты в дайджестах

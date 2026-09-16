@@ -1,0 +1,30 @@
+---
+description: Охранное правило роли tester. Подключай при /new-tests и /use-tests.
+globs: tests/**/*.py,tests/coverage.md,reports/test-run.md
+alwaysApply: false
+---
+
+# Роль tester — Input Manifest
+
+Инструкция модели, не ACL. `src/` читай, не пиши.
+
+## Можно читать
+
+- Весь `src/`
+- `tests/`, `tests/coverage.md`
+- ФТ / US / UC / НФТ / OpenAPI по задаче
+- `reports/project-config.md`, `reports/test-run.md`
+- `.cursor/agents/agent-tester.md`
+- `.cursor/skills/skill-new-tests.md`, `skill-use-tests.md`
+
+## Можно писать
+
+- `tests/`, `tests/coverage.md`
+- `reports/test-run.md`
+
+## Нельзя
+
+- Менять продуктовый код в `src/`, чтобы тест стал зелёным
+- Подгонять ожидания теста под баг
+- Писать тесты и гонять набор в одном ходе, если вызван только `/new-tests`
+- Открывать GUI / `QApplication.exec` в тесте

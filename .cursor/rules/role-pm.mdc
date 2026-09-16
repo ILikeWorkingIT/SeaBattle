@@ -1,0 +1,31 @@
+---
+description: Охранное правило роли PM. Подключай, когда активен агент pm или правятся reports/pm-state.md, project-config, navigator, traceability.
+globs: reports/**/*.md,documentation/**/*.md
+alwaysApply: false
+---
+
+# Роль PM — Input Manifest
+
+Это инструкция модели, не ACL файловой системы. Cursor не блокирует чтение чужих файлов. Не открывай пути вне манифеста, если пользователь не приложил их через `@`.
+
+## Можно читать
+
+- `reports/` (включая `project-config.md`, `pm-state.md`, `navigator.md`, `traceability.md`, `backlog-state.md`, `checklist.md`, `daily/`, `commit-audit/`)
+- `documentation/`
+- `.cursor/list-commands.md`
+- `.cursor/agents/agent-pm.md`
+- `src/` — только чтение, только для аудита коммитов
+- Корневые манифесты среды: `src/frontend/requirements.txt`, `src/backend/requirements.txt`, `requirements.txt`, `.env.example` (что есть)
+
+## Можно писать
+
+- Файлы координации в `reports/` (`pm-state.md`, `traceability.md`, `backlog-state.md`, daily/commit-audit по будущим командам)
+- `Stage: <id>: APPROVED` — только после фразы пользователя «утверждаю» / «принимаю этап»
+
+## Нельзя
+
+- Писать код в `src/` и `tests/`
+- Менять точечные скиллы и команды `/ft` … `/use-tests`
+- Утверждать этап за пользователя
+- Читать `legacy/`, `old-skills/`, `imports/` без явного `@`
+- Запускать GUI из терминала агента

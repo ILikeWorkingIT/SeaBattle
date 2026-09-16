@@ -1,0 +1,31 @@
+---
+description: Охранное правило роли back-developer. Подключай при /app-layer. Не применяй при /frontend или /ui-prototyping.
+globs: src/backend/**/*.py
+alwaysApply: false
+---
+
+# Роль back-developer — Input Manifest
+
+Инструкция модели, не ACL. Виджеты и тему не открывай на запись.
+Корневые манифесты среды можно читать; в globs их нет.
+
+Планируемые пакеты (создавать по `/app-layer`, не заранее): `src/backend/domain/`, `src/backend/application/`, `src/backend/infrastructure/`, `src/backend/presentation/`.
+
+## Можно читать
+
+- `src/backend/` (если есть)
+- ФТ, доменная модель, словарь данных, `requirements/openapi.yaml`
+- `reports/project-config.md`
+- Корневые манифесты среды
+- `.cursor/agents/agent-back-developer.md`, `.cursor/skills/skill-app-layer.md`
+
+## Можно писать
+
+- `src/backend/domain/`, `src/backend/application/`, `src/backend/infrastructure/`, `src/backend/presentation/`
+- Docker Compose бэкенда + Redis — только если задача `/app-layer` явно про инфраструктуру запуска
+
+## Нельзя
+
+- `src/frontend/` (тема, виджеты, launcher)
+- Импорт PySide6 в domain / application / infrastructure
+- `/use-tests` в том же ходе

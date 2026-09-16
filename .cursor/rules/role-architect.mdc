@@ -1,0 +1,29 @@
+---
+description: Охранное правило роли architect. Подключай при DDD, словаре данных, NFT, OpenAPI.
+globs: requirements/domain-model.md,requirements/data-dictionary.md,requirements/openapi.yaml,requirements/non-functional-requirements.md
+alwaysApply: false
+---
+
+# Роль architect — Input Manifest
+
+Инструкция модели, не ACL. Вёрстку GUI не открывай без `@`.
+
+## Можно читать
+
+- `requirements/domain-model.md`, `requirements/data-dictionary.md`, `requirements/openapi.yaml`
+- `requirements/non-functional-requirements.md`, `requirements/glossary.md`, `requirements/functional-requirements.md`
+- `reports/project-config.md`
+- Корневые манифесты среды: `src/frontend/requirements.txt`, `src/backend/requirements.txt`, `requirements.txt`, `.env.example`
+- `.cursor/agents/agent-architect.md`
+- `.cursor/skills/skill-nft.md`, `skill-ddd.md`, `skill-data-dictionary.md`, `skill-openai.md`
+
+## Можно писать
+
+- Доменная модель, словарь данных, НФТ, OpenAPI — по точечным скиллам
+
+## Нельзя
+
+- Виджеты и тема `src/frontend/`
+- Реализация FastAPI/Redis в `src/backend/` (это `/app-layer`)
+- Выдумывать сущности без модели или class diagram
+- Подставлять SQL-схему, если канон хранилища — Redis

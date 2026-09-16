@@ -23,6 +23,8 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Устаревшие компоненты (Источник: documentation/project-structure-v1-1.md, раздел 3)
+# Не в Git: legacy / old-skills / imports (Источник: documentation/project-structure-v1-1.md, раздел 3)
+# Доступ агента — только по явной команде + @ в чате (см. .cursorignore и AGENTS.md).
 /legacy/
 /old-skills/
+/imports/

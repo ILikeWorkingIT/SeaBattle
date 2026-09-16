@@ -4,6 +4,8 @@
 
 Стек по ТЗ: Python 3.12+, FastAPI, Redis, PySide6, Docker.
 
+Мультиагентная оболочка Cursor (MAS): предпочтительный вход — `/pm`. Описание — `documentation/mas-description.md`; стек для агентов — `reports/project-config.md`; команды — `.cursor/list-commands.md`.
+
 ## Как открыть окно Фронтенда
 
 Прототип — десктопное окно PySide6. Запуск из чата Cursor окно на рабочий стол не выводит (скрытая сессия).
@@ -42,6 +44,7 @@ python preview-openapi.py
 ## Входные документы
 
 - `documentation/specification-sea-battle-v1-1.md` — техническое задание (правила игры, ИИ, стек, языки).
+- `documentation/mas-description.md` — мультиагентная система Cursor (роли, гейты, `/pm`).
 - `documentation/project-structure-v1-1.md` — структура папок и правила именования файлов (синхронизируется с `.cursor/rules/rule-structure.mdc`).
 
 **Иерархия источников:** предварительное ТЗ — в `documentation/`; уточнения — в `requirements/answers-project.md` (`Axxxx`) и согласованных ФТ/НФТ. При конфликте с предварительным ТЗ приоритет у `Axxxx` и согласованных требований. Поведение агента — в `AGENTS.md`; память проекта — в `reports/agent-memory.md`.
@@ -50,21 +53,22 @@ python preview-openapi.py
 
 | Папка / файл | Назначение | Статус | Коммит / репозиторий | Индексация ИИ |
 | --- | --- | --- | --- | --- |
-| `documentation` | ТЗ и материалы разработчика | есть | да | да |
+| `documentation` | ТЗ, MAS, материалы разработчика | есть | да | да |
 | `requirements` | `functional-requirements.md`, `non-functional-requirements.md`, `answers-project.md` (`Axxxx`), `glossary.md`, `domain-model.md`, `data-dictionary.md`, `openapi.yaml`; `user-stories/`, `use-cases/`; `run-openapi-docs.bat`, `preview-openapi.py` | есть | да | да |
 | `diagrams` | текстовые диаграммы (PlantUML / Mermaid / BPMN) | есть | да (текст) | да (текст; картинки и бинарники — нет) |
 | `.cursor/skills` | промпты и инструкции для AI | есть | да | да |
 | `.cursor/rules` | правила для AI | есть | да | да |
-| `.cursor/commands` | команды Cursor (`/ft`, `/nft`, `/us`, `/uc`, `/qc-ft-nft`, `/qc-us-uc`, `/qc-ddd`, `/openai`, `/pin-memory` и др.) | есть | да | да |
-| `.cursor/agents` | файлы агентов | целевая | да | да |
+| `.cursor/commands` | команды Cursor (`/pm`, `/ft`, `/openai`, `/frontend`, `/app-layer` и др.) | есть | да | да |
+| `.cursor/agents` | файлы агентов MAS | есть | да | да |
 | `src` | исходный код MVP, скрипты, настройки (`run-frontend.bat`, пакет `frontend`) | есть | да | да |
-| `reports` | отчёты: `agent-memory.md`, `incompatibility-ft-nft.md`, `incompatibility-us-uc.md`, `domain-model-review.md` | есть | да | да |
-| `artifacts` | артефакты вне `requirements` | целевая | да | да |
+| `reports` | отчёты: `agent-memory.md`, `project-config.md`, `pm-state.md`, `navigator.md`, QC, шаблоны MAS | есть | да | да |
+| `artifacts` | артефакты вне `requirements` (Vision, ГОСТ) | целевая | да | да |
 | `tests` | автотесты | целевая | да | да |
 | `test-data` | зарезервирована; только по прямому заданию разработчика | целевая | да | да |
-| `legacy` | исходники и аналитика другого проекта; только по прямому заданию | — | нет | нет |
-| `old-skills` | скиллы из другого проекта; только по прямому заданию | — | нет | нет |
+| `legacy` | исходники и аналитика другого проекта; только по явной команде + `@` | — | нет | нет |
+| `old-skills` | скиллы из другого проекта; только по явной команде + `@` | — | нет | нет |
+| `imports` | копия чужого репозитория для переноса методологии; только по явной команде + `@` | — | нет | нет |
 
-Корневые ориентиры: `AGENTS.md` (правила агента), `.cursor/list-commands.md` (список команд и скиллов).
+Корневые ориентиры: `AGENTS.md` (правила агента и MAS), `.cursor/list-commands.md` (список команд, скиллов и агентов).
 
-`legacy/` и `old-skills/` исключены в `.gitignore` и `.cursorignore`. Не читать их самостоятельно, если разработчик явно не прикрепил файл через `@`.
+`legacy/`, `old-skills/` и `imports/` исключены в `.gitignore` и `.cursorignore`. Агент работает с ними только при явной команде и прикреплении через `@`.

@@ -1,0 +1,31 @@
+---
+description: >-
+  Стандарты Python этого репозитория: типы, pytest, PySide6, FastAPI, Redis.
+  Подключай при правке src/ и tests/.
+globs: src/**/*.py,tests/**/*.py
+alwaysApply: false
+---
+
+# Python Sea Battle
+
+Стек продукта: **Python 3.12+**, UI — **PySide6**, сервер — **FastAPI + Uvicorn**, сессии — **Redis**, тесты — **pytest** (+ `pytest-asyncio` для API). Не подставляй Gradio, Streamlit, Flask, React «вместо окна» или «вместо FastAPI».
+
+## Код
+
+- Аннотируй публичные функции и методы, включая `-> None`. Не используй `Any` как свалку.
+- Импорты — вверху модуля, не в теле функции.
+- Константы палитры и шрифтов клиента — `src/frontend/theme.py`. Hex в панелях не плоди.
+- Подписи экрана — i18n / глоссарий. Игроку на экране — «Компьютер» (EN: «Computer»), в документах — «Бэкенд».
+- Интерактивные виджеты — стабильный `self.<роль>` и `setObjectName` (аналог test id).
+- I/O сети не выполняй в GUI-потоке: `QThread` / `qasync` / воркер. На закрытии окна — стоп воркеров и закрытие клиента HTTP/WS.
+- В `src/backend/domain/` и `src/backend/application/` не импортируй `PySide6`.
+- Новую зависимость не добавляй без явной просьбы, кроме реализации куска по `/app-layer` из канона ТЗ (FastAPI, Uvicorn, redis-клиент, pydantic-settings) или клиента по `/frontend` (`httpx` / websockets — только если задача про сеть).
+
+## Тесты
+
+- Каталог `tests/`, раннер pytest, имена `test_should_<поведение>_when_<условие>`.
+- Не пиши unittest. Не открывай GUI / `QApplication.exec` / `mainloop` в тесте.
+- Селекторы UI: подпись канона, `self.*`, `objectName`. HTML `data-testid` на Qt не ставь.
+- Набор в этом правиле не гоняй: прогон — `/use-tests`; новые тесты — `/new-tests`.
+
+Рабочий UI — `/frontend`. Сервер и Redis — `/app-layer`. Макет без логики — `/ui-prototyping`.

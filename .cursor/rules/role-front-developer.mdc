@@ -1,0 +1,32 @@
+---
+description: Охранное правило роли front-developer. Подключай при /frontend. Не применяй при /ui-prototyping или /app-layer.
+globs: src/frontend/**/*.py,src/run-frontend.bat
+alwaysApply: false
+---
+
+# Роль front-developer — Input Manifest
+
+Инструкция модели, не ACL. Службы бэкенда не открывай без явного поручения ПМ.
+Если активны `/ui-prototyping` или агент designer — это правило не применяй (макет, не рабочий UI).
+Корневые манифесты среды можно читать.
+
+## Можно читать
+
+- `src/frontend/`
+- `requirements/functional-requirements.md`, `requirements/glossary.md`, `requirements/openapi.yaml`
+- Макет после `/ui-prototyping`
+- `reports/project-config.md`
+- `src/frontend/requirements.txt`
+- `.cursor/agents/agent-front-developer.md`, `.cursor/skills/skill-frontend-developer.md`
+
+## Можно писать
+
+- `src/frontend/` (хром, тема, i18n, клиент REST/WS без серверной логики)
+- `src/run-frontend.bat` при смене способа запуска
+
+## Нельзя
+
+- `src/backend/`
+- Тесты и `/use-tests` в том же ходе
+- Поднимать FastAPI / Redis / Docker
+- Запускать GUI из терминала агента
