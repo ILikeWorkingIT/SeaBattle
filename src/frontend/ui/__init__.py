@@ -1,3 +1,1 @@
-from frontend.ui.main_window import MainWindow
-
-__all__ = ["MainWindow"]
+"""UI package. Import MainWindow from frontend.ui.main_window to avoid cycles."""

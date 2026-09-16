@@ -15,10 +15,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from frontend.domain.session import Session
 from frontend.domain.types import EndReason, Side
 from frontend.i18n import I18n
-from frontend.mock.ledger import Snapshot
+from frontend.mock.static_scene import GameOverView, Snapshot
 from frontend.ui.stats_chart import StatsChart
 
 
@@ -98,19 +97,18 @@ class GameOverDialog(QDialog):
         row.addWidget(self._close)
         layout.addLayout(row)
 
-    def present(self, i18n: I18n, session: Session) -> None:
+    def present(self, i18n: I18n, view: GameOverView) -> None:
         self.next_action = None
         self.setWindowTitle(i18n.t("game_over"))
         self._kicker.setText(i18n.t("game_over"))
-        won = session.winner is Side.PLAYER
-        self._title.setText(i18n.t("you_won" if won else "you_lost"))
+        self._title.setText(i18n.t("you_won" if view.player_won else "you_lost"))
         reason = (
             i18n.t("reason_surrender")
-            if session.end_reason is EndReason.SURRENDER
+            if view.end_reason is EndReason.SURRENDER
             else i18n.t("reason_fleet")
         )
         self._reason.setText(reason)
-        self._shots.setText(i18n.t("shots_count", n=len(session.shots)))
+        self._shots.setText(i18n.t("shots_count", n=view.shot_count))
         self._new.setText(i18n.t("new_game"))
         self._stats.setText(i18n.t("open_stats"))
         self._close.setText(i18n.t("close"))
@@ -129,8 +127,6 @@ class GameOverDialog(QDialog):
 
 
 class StatsDialog(QDialog):
-    refresh_requested = Signal()
-
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setModal(True)
@@ -156,7 +152,7 @@ class StatsDialog(QDialog):
         self._table.verticalHeader().setVisible(False)
         self._table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self._refresh = QPushButton()
-        self._refresh.clicked.connect(self.refresh_requested.emit)
+        self._refresh.clicked.connect(lambda: None)
         self._close = QPushButton()
         self._close.setObjectName("Ghost")
         self._close.clicked.connect(self.accept)

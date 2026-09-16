@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 
 from frontend.domain.types import SHIP_LENGTH, FLEET_SPEC, ShipType
 from frontend.i18n import I18n
-from frontend.mock.ledger import Snapshot
+from frontend.mock.static_scene import Snapshot
 
 
 class LobbyScreen(QWidget):

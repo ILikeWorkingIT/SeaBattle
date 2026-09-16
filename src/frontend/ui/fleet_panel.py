@@ -3,9 +3,9 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-from frontend.domain.fleet import Fleet, Ship
 from frontend.domain.types import ShipStatus, ShipType
 from frontend.i18n import I18n
+from frontend.mock.static_scene import ShipView
 from frontend.theme import NAVY
 
 
@@ -22,19 +22,19 @@ class FleetPanel(QWidget):
         layout.addLayout(self._rows)
         layout.addStretch(1)
 
-    def bind(self, i18n: I18n, title: str, fleet: Fleet, hide_intact_positions: bool) -> None:
+    def bind(self, i18n: I18n, title: str, ships: list[ShipView]) -> None:
         self._title.setText(title)
         while self._rows.count():
             item = self._rows.takeAt(0)
             widget = item.widget()
             if widget is not None:
                 widget.deleteLater()
-        for ship in fleet.ships:
-            self._rows.addWidget(_ShipRow(i18n, ship, hide_intact_positions))
+        for ship in ships:
+            self._rows.addWidget(_ShipRow(i18n, ship))
 
 
 class _ShipRow(QFrame):
-    def __init__(self, i18n: I18n, ship: Ship, hide_intact: bool) -> None:
+    def __init__(self, i18n: I18n, ship: ShipView) -> None:
         super().__init__()
         gold = NAVY["gold"]
         self.setStyleSheet(
@@ -53,11 +53,11 @@ class _ShipRow(QFrame):
             ShipStatus.WOUNDED: i18n.t("status_wounded"),
             ShipStatus.SUNK: i18n.t("status_sunk"),
         }[ship.status]
-        bars = []
-        for deck in ship.decks:
-            if hide_intact and ship.status is ShipStatus.INTACT:
+        bars: list[str] = []
+        for hit in ship.decks_hit:
+            if ship.hide_intact_bars and ship.status is ShipStatus.INTACT:
                 bars.append("□")
-            elif deck.destroyed or ship.status is ShipStatus.SUNK:
+            elif hit or ship.status is ShipStatus.SUNK:
                 bars.append("■")
             else:
                 bars.append("□")
@@ -69,9 +69,7 @@ class _ShipRow(QFrame):
             ShipStatus.SUNK: "#E05A5A",
         }[ship.status]
         right.setStyleSheet(f"color: {color}; border: none; background: transparent;")
-        left.setStyleSheet(
-            f"color: {gold}; border: none; background: transparent;"
-        )
+        left.setStyleSheet(f"color: {gold}; border: none; background: transparent;")
         layout.addWidget(left)
         layout.addStretch(1)
         layout.addWidget(right, 0, Qt.AlignmentFlag.AlignRight)

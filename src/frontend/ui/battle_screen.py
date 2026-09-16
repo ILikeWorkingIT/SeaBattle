@@ -12,24 +12,21 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from frontend.domain.session import Session, ShotOutcome
-from frontend.domain.types import Language, Mark, Side
+from frontend.domain.types import Language
 from frontend.i18n import I18n
-from frontend.ui.board_widget import BoardWidget, CellView
+from frontend.mock.static_scene import BattleScene
+from frontend.ui.board_widget import BoardWidget
 from frontend.ui.fleet_panel import FleetPanel
 from frontend.ui.shot_log import ShotLog
 
 
 class BattleScreen(QWidget):
-    player_shot = Signal(int, int)
-    own_board_clicked = Signal()
     surrender_requested = Signal()
     stats_requested = Signal()
     copy_session = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self._language = Language.RU
         self._turn_badge = QLabel()
         self._turn_badge.setObjectName("Kicker")
         self._ttl_label = QLabel()
@@ -47,15 +44,9 @@ class BattleScreen(QWidget):
         self._surrender_btn = QPushButton()
         self._surrender_btn.setObjectName("Danger")
         self._surrender_btn.clicked.connect(self.surrender_requested.emit)
-        self._aiming = QLabel()
-        self._aiming.setObjectName("Kicker")
-        self._aiming.hide()
 
         self.player_board = BoardWidget()
         self.backend_board = BoardWidget()
-        self.backend_board.interactive = True
-        self.player_board.cell_clicked.connect(lambda *_: self.own_board_clicked.emit())
-        self.backend_board.cell_clicked.connect(self.player_shot.emit)
 
         self._legend_hit = QLabel()
         self._legend_sunk = QLabel()
@@ -84,7 +75,6 @@ class BattleScreen(QWidget):
         ttl_box.addLayout(ttl_caption)
         ttl_box.addWidget(self._ttl_bar)
         top.addWidget(self._turn_badge)
-        top.addWidget(self._aiming)
         top.addStretch(1)
         top.addLayout(ttl_box)
         top.addWidget(self._session_btn)
@@ -119,11 +109,30 @@ class BattleScreen(QWidget):
         layout.addLayout(top)
         layout.addLayout(body, 1)
 
+    def bind_scene(self, i18n: I18n, language: Language, scene: BattleScene) -> None:
+        self.retranslate(i18n)
+        self.player_board.set_language(language)
+        self.backend_board.set_language(language)
+        self.player_board.set_cells(scene.player_cells)
+        self.backend_board.set_cells(scene.backend_cells)
+        player_turn = scene.player_turn
+        self._turn_badge.setText(i18n.t("turn_player" if player_turn else "turn_backend"))
+        self._turn_badge.setStyleSheet(
+            "color: #E0B14A;" if player_turn else "color: #3EC8B0;"
+        )
+        self._session_btn.setText(f"{i18n.t('session')}  {scene.session_id[:8]}")
+        self._player_fleet.bind(i18n, i18n.t("fleet_player"), scene.player_ships)
+        self._backend_fleet.bind(i18n, i18n.t("fleet_backend"), scene.backend_ships)
+        self._log.bind(i18n, language, scene.shots)
+        seconds = scene.ttl_seconds
+        self._ttl_bar.setValue(seconds)
+        minutes, secs = divmod(seconds, 60)
+        self._ttl_label.setText(f"{minutes:02d}:{secs:02d}")
+
     def retranslate(self, i18n: I18n) -> None:
         self._ttl_caption.setText(i18n.t("ttl"))
         self._stats_btn.setText(i18n.t("open_stats"))
         self._surrender_btn.setText(i18n.t("surrender"))
-        self._aiming.setText(i18n.t("aiming"))
         self._legend_hit.setText(i18n.t("legend_hit"))
         self._legend_sunk.setText(i18n.t("legend_sunk"))
         self._legend_miss.setText(i18n.t("legend_miss"))
@@ -131,58 +140,3 @@ class BattleScreen(QWidget):
         self._tabs.setTabText(1, i18n.t("shots"))
         self.player_board.set_title(i18n.t("board_player"))
         self.backend_board.set_title(i18n.t("board_backend"))
-
-    def bind_session(self, i18n: I18n, language: Language, session: Session, last: ShotOutcome | None) -> None:
-        self._language = language
-        self.retranslate(i18n)
-        self.player_board.set_language(language)
-        self.backend_board.set_language(language)
-        last_player = last.shot.coords if last and last.shot.shooter is Side.PLAYER else None
-        last_backend = last.shot.coords if last and last.shot.shooter is Side.BACKEND else None
-        self.player_board.set_cells(_views(session, Side.PLAYER, last_backend, reveal_ships=True))
-        self.backend_board.set_cells(_views(session, Side.BACKEND, last_player, reveal_ships=False))
-        self.backend_board.interactive = session.turn is Side.PLAYER
-        player_turn = session.turn is Side.PLAYER
-        self._turn_badge.setText(i18n.t("turn_player" if player_turn else "turn_backend"))
-        self._turn_badge.setStyleSheet(
-            "color: #E0B14A;" if player_turn else "color: #3EC8B0;"
-        )
-        self._surrender_btn.setEnabled(True)
-        self._session_btn.setText(f"{i18n.t('session')}  {session.id[:8]}")
-        self._player_fleet.bind(i18n, i18n.t("fleet_player"), session.player_fleet, False)
-        self._backend_fleet.bind(i18n, i18n.t("fleet_backend"), session.backend_fleet, True)
-        self._log.bind(i18n, language, session.shots)
-        self.update_ttl(session)
-
-    def update_ttl(self, session: Session) -> None:
-        remain = session.remain_ttl()
-        seconds = int(remain.total_seconds())
-        self._ttl_bar.setValue(seconds)
-        minutes, secs = divmod(seconds, 60)
-        self._ttl_label.setText(f"{minutes:02d}:{secs:02d}")
-
-    def set_aiming(self, aiming: bool) -> None:
-        self._aiming.setVisible(aiming)
-        self.player_board.set_aiming(aiming)
-        self.backend_board.interactive = not aiming
-
-
-def _views(
-    session: Session,
-    owner: Side,
-    last,
-    reveal_ships: bool,
-) -> list[list[CellView]]:
-    board = session.board_for(owner)
-    grid: list[list[CellView]] = []
-    for row in range(10):
-        line: list[CellView] = []
-        for col in range(10):
-            cell = board.cell(col, row)
-            show_ship = bool(cell.occupancy_ship) and (
-                reveal_ships or cell.mark in {Mark.HIT, Mark.SUNK}
-            )
-            last_shot = last is not None and last.column == col and last.row == row
-            line.append(CellView(cell.mark, show_ship, last_shot))
-        grid.append(line)
-    return grid

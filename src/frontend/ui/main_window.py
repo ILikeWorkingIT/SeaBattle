@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QTimer
-from PySide6.QtGui import QAction, QActionGroup, QGuiApplication
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QMainWindow, QStackedWidget, QVBoxLayout, QWidget
+from PySide6.QtGui import QAction, QActionGroup
 
-from frontend.domain.session import Session, ShotOutcome
-from frontend.domain.types import Language, Mark, ShotResult, Side
+from frontend.domain.types import Language
 from frontend.i18n import I18n
-from frontend.mock.backend import MockBackend
-from frontend.mock.ledger import Snapshot
+from frontend.mock.static_scene import (
+    BATTLE_SCENE,
+    LOBBY_SLOTS_USED,
+    STATS_SNAPSHOT,
+)
 from frontend.settings_store import SettingsStore
 from frontend.theme import APP_QSS
 from frontend.ui.battle_screen import BattleScreen
@@ -25,9 +27,7 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(APP_QSS)
         self.settings = SettingsStore(self)
         self.i18n = I18n(self.settings.language)
-        self.backend = MockBackend(self)
-        self._last_outcome: ShotOutcome | None = None
-        self._busy_start = False
+        self._on_battle = False
 
         root = QWidget()
         root.setObjectName("Root")
@@ -50,10 +50,7 @@ class MainWindow(QMainWindow):
         self._connect()
         self.settings.language_changed.connect(self._on_language)
         self._retranslate()
-        self._refresh_lobby()
-        self._ttl_ui = QTimer(self)
-        self._ttl_ui.setInterval(1000)
-        self._ttl_ui.timeout.connect(self._tick_ttl)
+        self._show_lobby()
 
     def showEvent(self, event) -> None:
         super().showEvent(event)
@@ -67,7 +64,7 @@ class MainWindow(QMainWindow):
 
     def _build_menu(self) -> None:
         self._act_new = QAction(self)
-        self._act_new.triggered.connect(self._request_new_from_menu)
+        self._act_new.triggered.connect(self._show_battle)
         self._act_surrender = QAction(self)
         self._act_surrender.triggered.connect(self._confirm_surrender)
         self._act_exit = QAction(self)
@@ -100,28 +97,12 @@ class MainWindow(QMainWindow):
         self._menu_language = language
 
     def _connect(self) -> None:
-        self.lobby.start_requested.connect(self._start_session)
+        self.lobby.start_requested.connect(self._show_battle)
         self.lobby.stats_requested.connect(self._open_stats)
-        self.battle.player_shot.connect(self._on_player_shot)
-        self.battle.own_board_clicked.connect(
-            lambda: self.toasts.show_message(self.i18n.t("err_own"), "warn")
-        )
         self.battle.surrender_requested.connect(self._confirm_surrender)
         self.battle.stats_requested.connect(self._open_stats)
         self.battle.copy_session.connect(self._copy_session)
-        self.surrender_dialog.confirmed.connect(self.backend.surrender)
-        self.stats_dialog.refresh_requested.connect(self.backend.request_stats)
-
-        self.backend.session_started.connect(self._on_started)
-        self.backend.start_failed.connect(self._on_start_failed)
-        self.backend.shot_resolved.connect(self._on_shot_resolved)
-        self.backend.shot_rejected.connect(self._on_shot_rejected)
-        self.backend.backend_aiming.connect(self._on_aiming)
-        self.backend.backend_shot.connect(self._on_backend_shot)
-        self.backend.game_over.connect(self._on_game_over)
-        self.backend.session_aborted.connect(self._on_aborted)
-        self.backend.ttl_expired.connect(self._on_ttl_expired)
-        self.backend.stats_ready.connect(self._on_stats_ready)
+        self.surrender_dialog.confirmed.connect(self._after_surrender)
 
     def _retranslate(self) -> None:
         i18n = self.i18n
@@ -137,169 +118,51 @@ class MainWindow(QMainWindow):
         self._act_en.setText(i18n.t("lang_en"))
         self._act_ru.setChecked(self.settings.language is Language.RU)
         self._act_en.setChecked(self.settings.language is Language.EN)
-        in_battle = self.stack.currentWidget() is self.battle
-        self._act_surrender.setEnabled(in_battle)
-        self.lobby.bind(i18n, self.backend.snapshot(), self.backend.occupied_slots())
+        self._act_surrender.setEnabled(self._on_battle)
+        self.lobby.bind(i18n, STATS_SNAPSHOT, LOBBY_SLOTS_USED)
         self.surrender_dialog.retranslate(i18n)
         self.stats_dialog.retranslate(i18n)
-        if in_battle and self.backend.session is not None:
-            self.battle.bind_session(i18n, self.settings.language, self.backend.session, self._last_outcome)
+        if self._on_battle:
+            self.battle.bind_scene(i18n, self.settings.language, BATTLE_SCENE)
 
     def _on_language(self, language: Language) -> None:
         self.i18n = I18n(language)
         self._retranslate()
         self.toasts.show_message(self.i18n.t("toast_lang"), "ok")
 
-    def _refresh_lobby(self) -> None:
-        self.lobby.bind(self.i18n, self.backend.snapshot(), self.backend.occupied_slots())
+    def _show_lobby(self) -> None:
+        self._on_battle = False
+        self.stack.setCurrentWidget(self.lobby)
+        self._act_surrender.setEnabled(False)
+        self.lobby.bind(self.i18n, STATS_SNAPSHOT, LOBBY_SLOTS_USED)
 
-    def _start_session(self) -> None:
-        if self._busy_start:
-            return
-        self._busy_start = True
-        self.lobby.set_busy(True, self.i18n)
-        self.backend.start_session()
-
-    def _request_new_from_menu(self) -> None:
-        if self.backend.session is not None:
-            self._confirm_surrender()
-            return
-        self._start_session()
-
-    def _on_started(self, session: Session) -> None:
-        self._busy_start = False
-        self.lobby.set_busy(False, self.i18n)
-        self._last_outcome = None
+    def _show_battle(self) -> None:
+        self._on_battle = True
         self.stack.setCurrentWidget(self.battle)
-        self.battle.bind_session(self.i18n, self.settings.language, session, None)
         self._act_surrender.setEnabled(True)
-        self._ttl_ui.start()
-        self.toasts.show_message(self.i18n.t("toast_started"), "ok")
-
-    def _on_start_failed(self, code: str) -> None:
-        self._busy_start = False
-        self.lobby.set_busy(False, self.i18n)
-        if code == "FT-049":
-            self.toasts.show_message(self.i18n.t("toast_limit"), "error")
-            return
-        self.toasts.show_message(self.i18n.t("toast_start_fail", code=code), "error")
-
-    def _on_player_shot(self, column: int, row: int) -> None:
-        session = self.backend.session
-        if session is None:
-            return
-        if session.turn is not Side.PLAYER:
-            self.toasts.show_message(self.i18n.t("err_not_turn"), "warn")
-            return
-        if self.backend.shot_pending:
-            self.toasts.show_message(self.i18n.t("err_pending"), "warn")
-            return
-        mark = session.backend_board.mark_at(column, row)
-        if mark is not Mark.UNCHECKED:
-            self.toasts.show_message(self.i18n.t("err_checked"), "warn")
-            return
-        self.backend.player_shot(column, row)
-
-    def _on_shot_resolved(self, outcome: ShotOutcome) -> None:
-        self._last_outcome = outcome
-        self._refresh_battle()
-        self._toast_result(outcome, player=True)
-
-    def _on_shot_rejected(self, code: str) -> None:
-        self.toasts.show_message(self.i18n.t("toast_rejected", code=code), "error")
-
-    def _on_aiming(self) -> None:
-        self.battle.set_aiming(True)
-
-    def _on_backend_shot(self, outcome: ShotOutcome) -> None:
-        self.battle.set_aiming(False)
-        self._last_outcome = outcome
-        self._refresh_battle()
-        cell = self._cell_text(outcome)
-        self.toasts.show_message(
-            self.i18n.t("toast_backend_shot", result=outcome.shot.result.value, cell=cell),
-            "info",
-        )
-
-    def _on_game_over(self, session: Session) -> None:
-        self.battle.set_aiming(False)
-        self._ttl_ui.stop()
-        self._refresh_battle()
-        self._act_surrender.setEnabled(False)
-        self.game_over_dialog.present(self.i18n, session)
-        self.game_over_dialog.exec()
-        action = self.game_over_dialog.next_action
-        self.backend.clear_session()
-        self.stack.setCurrentWidget(self.lobby)
-        self._act_surrender.setEnabled(False)
-        self._refresh_lobby()
-        if action == "new":
-            self._start_session()
-        elif action == "stats":
-            self._open_stats()
-
-    def _on_aborted(self) -> None:
-        self._ttl_ui.stop()
-        self.battle.set_aiming(False)
-        self.stack.setCurrentWidget(self.lobby)
-        self._refresh_lobby()
-        self.toasts.show_message(self.i18n.t("toast_abort"), "error")
-
-    def _on_ttl_expired(self) -> None:
-        self._ttl_ui.stop()
-        self.stack.setCurrentWidget(self.lobby)
-        self._refresh_lobby()
-        self.toasts.show_message(self.i18n.t("toast_ttl"), "warn")
+        self.battle.bind_scene(self.i18n, self.settings.language, BATTLE_SCENE)
 
     def _open_stats(self) -> None:
-        self.stats_dialog.bind(self.i18n, self.backend.snapshot())
-        self.backend.request_stats()
+        self.stats_dialog.bind(self.i18n, STATS_SNAPSHOT)
         self.stats_dialog.exec()
 
-    def _on_stats_ready(self, snapshot: Snapshot) -> None:
-        self.stats_dialog.bind(self.i18n, snapshot)
-        self.lobby.bind(self.i18n, snapshot, self.backend.occupied_slots())
-        if self.stats_dialog.isVisible():
-            self.toasts.show_message(self.i18n.t("toast_stats"), "ok")
-
     def _confirm_surrender(self) -> None:
-        if self.backend.session is None:
+        if not self._on_battle:
             return
         self.surrender_dialog.retranslate(self.i18n)
         self.surrender_dialog.exec()
 
+    def _after_surrender(self) -> None:
+        # Navigation only: show game-over appearance, then return to lobby.
+        self.game_over_dialog.present(self.i18n, BATTLE_SCENE.game_over)
+        self.game_over_dialog.exec()
+        action = self.game_over_dialog.next_action
+        self._show_lobby()
+        if action == "new":
+            self._show_battle()
+        elif action == "stats":
+            self._open_stats()
+
     def _copy_session(self) -> None:
-        session = self.backend.session
-        if session is None:
-            return
-        QGuiApplication.clipboard().setText(session.id)
+        QGuiApplication.clipboard().setText(BATTLE_SCENE.session_id)
         self.toasts.show_message(self.i18n.t("copied"), "ok")
-
-    def _refresh_battle(self) -> None:
-        session = self.backend.session
-        if session is None:
-            return
-        self.battle.bind_session(self.i18n, self.settings.language, session, self._last_outcome)
-
-    def _tick_ttl(self) -> None:
-        session = self.backend.session
-        if session is None:
-            return
-        self.battle.update_ttl(session)
-
-    def _toast_result(self, outcome: ShotOutcome, player: bool) -> None:
-        match outcome.shot.result:
-            case ShotResult.MISS:
-                self.toasts.show_message(self.i18n.t("toast_miss"), "info")
-            case ShotResult.HIT:
-                self.toasts.show_message(self.i18n.t("toast_hit"), "ok")
-            case ShotResult.SUNK:
-                self.toasts.show_message(self.i18n.t("toast_sunk"), "ok")
-            case _:
-                never: ShotResult = outcome.shot.result
-                raise ValueError(f"Unhandled shot result: {never}")
-
-    def _cell_text(self, outcome: ShotOutcome) -> str:
-        from frontend.domain.types import display_coord
-
-        return display_coord(outcome.shot.coords, self.settings.language).text()

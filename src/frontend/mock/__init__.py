@@ -1,1 +1,1 @@
-"""Mock backend package: in-process stand-in for REST + WebSocket."""
+"""Static mock data for the visual UI shell."""

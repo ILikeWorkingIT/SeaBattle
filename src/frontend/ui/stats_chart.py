@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import QWidget
 
-from frontend.mock.ledger import Snapshot
+from frontend.mock.static_scene import Snapshot
 from frontend.theme import NAVY
 
 

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QAbstractItemView, QHeaderView, QTableWidget, QTableWidgetItem, QWidget
 
-from frontend.domain.session import Shot
-from frontend.domain.types import Language, Side, display_coord
+from frontend.domain.types import Language, Side, display_coord, CellCoordinate
 from frontend.i18n import I18n
+from frontend.mock.static_scene import ShotView
 
 
 class ShotLog(QTableWidget):
@@ -22,12 +22,12 @@ class ShotLog(QTableWidget):
             [i18n.t("log_seq"), i18n.t("log_shooter"), i18n.t("log_cell"), i18n.t("log_result")]
         )
 
-    def bind(self, i18n: I18n, language: Language, shots: list[Shot]) -> None:
+    def bind(self, i18n: I18n, language: Language, shots: list[ShotView]) -> None:
         self.retranslate(i18n)
         self.setRowCount(len(shots))
         for index, shot in enumerate(reversed(shots)):
             shooter = i18n.t("side_player" if shot.shooter is Side.PLAYER else "side_backend")
-            cell = display_coord(shot.coords, language).text()
+            cell = display_coord(CellCoordinate(shot.column, shot.row), language).text()
             values = (str(shot.seq), shooter, cell, shot.result.value)
             for column, value in enumerate(values):
                 self.setItem(index, column, QTableWidgetItem(value))
