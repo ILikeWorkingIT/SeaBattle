@@ -61,7 +61,8 @@ class _ShipRow(QFrame):
                 bars.append("■")
             else:
                 bars.append("□")
-        left = QLabel(f"{name}  {''.join(bars)}")
+        bar_text = "".join(bars)
+        left = QLabel(bar_text if not ship.type_known else f"{name}  {bar_text}")
         right = QLabel(status_text)
         color = {
             ShipStatus.INTACT: "#8FAABB",

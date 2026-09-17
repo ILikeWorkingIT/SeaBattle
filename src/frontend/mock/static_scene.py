@@ -22,6 +22,8 @@ class ShipView:
     status: ShipStatus
     decks_hit: tuple[bool, ...]
     hide_intact_bars: bool = False
+    deck_coords: tuple[tuple[int, int], ...] = ()
+    type_known: bool = True
 
 
 @dataclass(slots=True)
@@ -69,6 +71,8 @@ class BattleScene:
     backend_ships: list[ShipView]
     shots: list[ShotView]
     game_over: GameOverView
+    last_shot_seq: int = 0
+    match_over: bool = False
 
 
 def _empty_grid() -> list[list[CellView]]:

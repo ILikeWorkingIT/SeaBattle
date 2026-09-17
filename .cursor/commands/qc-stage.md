@@ -21,7 +21,7 @@
 
 ## Skill(s)
 
-`.cursor/skills/skill-agent-anatomist.md`. Если `stage-id` = `qc-ft-nft` / `qc-us-uc` / `qc-ddd` — соответствующий точечный QC-скилл, без дублирования алгоритма.
+`.cursor/skills/skill-agent-anatomist.md`. Если `stage-id` = `qc-ft-nft` / `qc-us-uc` / `qc-ddd` — соответствующий точечный QC-скилл, без дублирования алгоритма. Срез `S-NN` и прочие команды из `list-commands.md` — универсальный чек-лист (см. скилл). Не путать сценарий S5 со срезом `S-05`.
 
 ## Output artifact(s)
 

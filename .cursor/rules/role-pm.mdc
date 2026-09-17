@@ -10,7 +10,7 @@ alwaysApply: false
 
 ## Можно читать
 
-- `reports/` (включая `project-config.md`, `pm-state.md`, `navigator.md`, `traceability.md`, `backlog-state.md`, `checklist.md`, `daily/`, `commit-audit/`)
+- `reports/` (включая `project-config.md`, `pm-state.md`, `navigator.md`, `checklist.md`, `traceability.md`, `backlog-state.md`, `daily/`, `commit-audit/`)
 - `documentation/`
 - `.cursor/list-commands.md`
 - `.cursor/agents/agent-pm.md`
@@ -19,7 +19,7 @@ alwaysApply: false
 
 ## Можно писать
 
-- Файлы координации в `reports/` (`pm-state.md`, `traceability.md`, `backlog-state.md`, daily/commit-audit по будущим командам)
+- Файлы координации в `reports/` (`pm-state.md`, `checklist.md`, `traceability.md`, `backlog-state.md`, daily/commit-audit по будущим командам)
 - `Stage: <id>: APPROVED` — только после фразы пользователя «утверждаю» / «принимаю этап»
 
 ## Нельзя

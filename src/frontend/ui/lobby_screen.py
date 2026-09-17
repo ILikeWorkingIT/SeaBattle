@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFrame,
@@ -12,9 +14,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from frontend.client.statistics import format_avg_shots
 from frontend.domain.types import SHIP_LENGTH, FLEET_SPEC, ShipType
 from frontend.i18n import I18n
 from frontend.mock.static_scene import Snapshot
+
+StartPhase = Literal["idle", "loading", "error", "success"]
+StatsPhase = Literal["idle", "loading", "error", "empty", "success"]
 
 
 class LobbyScreen(QWidget):
@@ -34,17 +40,47 @@ class LobbyScreen(QWidget):
         self._mode.setObjectName("Kicker")
         self._start = QPushButton()
         self._start.setObjectName("Primary")
+        self._start.setAccessibleName("start-match")
         self._start.clicked.connect(self.start_requested.emit)
+        self.start_button = self._start
         self._stats = QPushButton()
         self._stats.setObjectName("Ghost")
+        self._stats.setAccessibleName("open-stats")
         self._stats.clicked.connect(self.stats_requested.emit)
+        self.stats_button = self._stats
         self._slots = QLabel()
         self._slots.setObjectName("Muted")
+        self._empty = QLabel()
+        self._empty.setObjectName("lobby-empty")
+        self._empty.setWordWrap(True)
+        self._loading = QLabel()
+        self._loading.setObjectName("lobby-loading")
+        self._loading.setWordWrap(True)
+        self._error = QLabel()
+        self._error.setObjectName("lobby-error")
+        self._error.setWordWrap(True)
+        self._error.setVisible(False)
+        self._loading.setVisible(False)
+        self._stats_empty = QLabel()
+        self._stats_empty.setObjectName("lobby-stats-empty")
+        self._stats_empty.setWordWrap(True)
+        self._stats_empty.setVisible(False)
+        self._stats_loading = QLabel()
+        self._stats_loading.setObjectName("lobby-stats-loading")
+        self._stats_loading.setWordWrap(True)
+        self._stats_loading.setVisible(False)
+        self._stats_error = QLabel()
+        self._stats_error.setObjectName("lobby-stats-error")
+        self._stats_error.setWordWrap(True)
+        self._stats_error.setVisible(False)
         self._kpis = QHBoxLayout()
+        self._kpi_cards: list[QFrame] = []
         self._kpi_widgets: list[tuple[QLabel, QLabel]] = []
-        for _ in range(4):
-            card, caption, value = _metric_card()
+        names = ("kpi-games", "kpi-player-wins", "kpi-computer-wins", "kpi-avg-shots")
+        for name in names:
+            card, caption, value = _metric_card(name)
             self._kpis.addWidget(card)
+            self._kpi_cards.append(card)
             self._kpi_widgets.append((caption, value))
 
         self._tabs = QTabWidget()
@@ -85,6 +121,12 @@ class LobbyScreen(QWidget):
         layout.setSpacing(18)
         layout.addLayout(header)
         layout.addLayout(actions)
+        layout.addWidget(self._empty)
+        layout.addWidget(self._loading)
+        layout.addWidget(self._error)
+        layout.addWidget(self._stats_empty)
+        layout.addWidget(self._stats_loading)
+        layout.addWidget(self._stats_error)
         layout.addLayout(self._kpis)
         layout.addWidget(self._tabs, 1)
 
@@ -93,6 +135,27 @@ class LobbyScreen(QWidget):
     def set_busy(self, busy: bool, i18n: I18n) -> None:
         self._start.setEnabled(not busy)
         self._start.setText(i18n.t("starting") if busy else i18n.t("start_game"))
+
+    def apply_start_phase(self, i18n: I18n, phase: StartPhase, error_text: str) -> None:
+        loading = phase == "loading"
+        self.set_busy(loading, i18n)
+        self._empty.setText(i18n.t("empty_session"))
+        self._loading.setText(i18n.t("starting"))
+        self._error.setText(error_text)
+        self._empty.setVisible(phase == "idle")
+        self._loading.setVisible(loading)
+        self._error.setVisible(phase == "error")
+
+    def apply_stats_phase(self, i18n: I18n, phase: StatsPhase, error_text: str) -> None:
+        self._stats_empty.setText(i18n.t("stats_empty"))
+        self._stats_loading.setText(i18n.t("stats_loading"))
+        self._stats_error.setText(error_text)
+        self._stats_empty.setVisible(phase == "empty")
+        self._stats_loading.setVisible(phase == "loading")
+        self._stats_error.setVisible(phase == "error")
+        show_cards = phase in {"idle", "empty", "success"}
+        for card in self._kpi_cards:
+            card.setVisible(show_cards)
 
     def bind(self, i18n: I18n, snapshot: Snapshot, used_slots: int) -> None:
         self._kicker.setText(i18n.t("lobby_kicker"))
@@ -112,7 +175,7 @@ class LobbyScreen(QWidget):
             str(snapshot.games),
             str(snapshot.player_wins),
             str(snapshot.backend_wins),
-            f"{snapshot.avg_shots:.1f}",
+            format_avg_shots(snapshot.avg_shots),
         )
         for (caption, value), text, amount in zip(self._kpi_widgets, captions, values):
             caption.setText(text)
@@ -159,7 +222,7 @@ class LobbyScreen(QWidget):
             self._fleet_grid.addWidget(meta, row, 1)
 
 
-def _metric_card() -> tuple[QFrame, QLabel, QLabel]:
+def _metric_card(value_name: str) -> tuple[QFrame, QLabel, QLabel]:
     card = QFrame()
     card.setObjectName("Card")
     layout = QVBoxLayout(card)
@@ -168,6 +231,7 @@ def _metric_card() -> tuple[QFrame, QLabel, QLabel]:
     caption.setObjectName("CardTitle")
     value = QLabel("0")
     value.setObjectName("CardValue")
+    value.setAccessibleName(value_name)
     layout.addWidget(caption)
     layout.addWidget(value)
     return card, caption, value

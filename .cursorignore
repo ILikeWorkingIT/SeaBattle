@@ -19,6 +19,7 @@ __pycache__/
 # Секретные данные и ключи (важно для безопасности!)
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 credentials.json
@@ -37,7 +38,6 @@ data/raw/
 # (Источник: documentation/project-structure-v1-1.md, раздел 3; AGENTS.md)
 /legacy/
 /old-skills/
-/imports/
 
 # Картинки и бинарники диаграмм не используются для актуализации.
 /diagrams/**/*.png

@@ -10,5 +10,5 @@ owner: back-developer
 # Скилл агента back-developer
 
 Выполни `.cursor/skills/skill-app-layer.md` (команда `/app-layer`).
-В UI (`src/frontend/`) ничего не меняй.
-`/use-tests` не запускай.
+В UI (`src/frontend/`) и в `tests/` ничего не меняй.
+`/new-tests` и `/use-tests` не запускай.

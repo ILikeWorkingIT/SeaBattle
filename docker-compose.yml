@@ -1,0 +1,30 @@
+# Sea Battle MVP: Redis + FastAPI backend (ТЗ §2.4).
+# Do not start without the user's permission. Example: docker compose up --build
+# Redis data on host: F:/Docker/redis/ (agent-memory / skill-app-layer §5.2).
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - F:/Docker/redis/:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      HOST: 0.0.0.0
+      PORT: "8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped

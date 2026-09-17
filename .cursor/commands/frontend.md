@@ -12,7 +12,7 @@ description: >-
 
 Не пиши React, браузер, Gradio, Streamlit. HTML `data-testid` не ставь: на интерактивном виджете — `self.<роль>` и `setObjectName`. Подписи глоссария не переименовывай.
 
-Не выполняй `.cursor/skills/skill-new-tests.md` и `.cursor/skills/skill-use-tests.md` в этом запуске. После правки предложи `/new-tests` и `/use-tests` отдельными командами.
+Не выполняй `.cursor/skills/skill-new-tests.md` и `.cursor/skills/skill-use-tests.md` в этом запуске. Прямой `/frontend` (сценарий S5): после правки предложи `/new-tests` и `/use-tests`. Ход от ПМ: рапорт ПМ, без slash пользователю.
 
 Не запускай окно из терминала агента. Напомни `src/run-frontend.bat`.
 
@@ -30,4 +30,4 @@ description: >-
 
 ## После выполнения
 
-Кратко: режим; какие виджеты / `objectName` / токены; как открыть окно самим; предложи `/use-tests` (и `/new-tests` при новых контролах). В этом запуске их не выполняй.
+Кратко: режим; какие виджеты / `objectName` / токены; как открыть окно самим. Прямой вызов: предложи `/use-tests` (и `/new-tests` при новых контролах), не выполняй. Ход от ПМ: только рапорт ПМ.

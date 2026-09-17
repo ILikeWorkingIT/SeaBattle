@@ -111,13 +111,13 @@
 
 Каждая **развёрнутая** команда — файл в `.cursor/commands/` с разделами: Цель этапа, Роль-исполнитель, Input manifest, Skill(s), Output artifact(s), Review manifest, Gate checklist, Update traceability.
 
-Канон команд этого репозитория — `.cursor/list-commands.md`. Пункты §5.2–5.3 без файла команды (`/full-cycle`, `/glossary`, `/backlog-sync`, `/commit-audit`, `/daily-brief`, `/meeting-actions`, `/feature-from-code`, `/feature-add`, `/report-weekly`, `/report-presentation`, `/release-notes`) **не имитировать**. Развёрнуты: `/pm`, `/vision`, `/gost-3460289`, `/ft`, `/nft`, `/us`, `/uc`, `/qc-ft-nft`, `/qc-us-uc`, `/ddd`, `/qc-ddd`, `/data-dictionary`, `/diagram-bpmn`, `/diagram-mermaid`, `/openai`, `/ui-prototyping`, `/frontend`, `/app-layer`, `/new-tests`, `/use-tests`, `/qc-stage`, `/pin-memory`.
+Канон команд этого репозитория — `.cursor/list-commands.md`. Имена в §5.1–5.3 **без файла** в `.cursor/commands/` — шаблон методологии: **не создавать** эти команды и **не имитировать** поведение (`/glossary`, `/release-notes`, весь §5.2, в §5.3 все пункты кроме `/qc-stage`). Развёрнуты: `/pm`, `/vision`, `/gost-3460289`, `/ft`, `/nft`, `/us`, `/uc`, `/qc-ft-nft`, `/qc-us-uc`, `/ddd`, `/qc-ddd`, `/data-dictionary`, `/diagram-bpmn`, `/diagram-mermaid`, `/openai`, `/ui-prototyping`, `/frontend`, `/app-layer`, `/new-tests`, `/use-tests`, `/qc-stage`, `/pin-memory`.
 
 **5.1. Этапы документации и проектирования (при необходимости PM может менять этапы):**
 
 - `/pm` (PM) -> Инициализация `reports/project-config.md` и `reports/pm-state.md`.
 - `/vision` (Tech-Writer) -> Vision & Scope (`artifacts/vision-scope.md`).
-- `/glossary` (Analyst) -> Наполнение глоссария (`requirements/glossary.md`).
+- `/glossary` (Analyst) -> Наполнение глоссария (`requirements/glossary.md`). **Файла команды нет** — править глоссарий из `/ft` / `/us` / `/uc` по скиллам, не имитировать `/glossary`.
 - `/ft` (Analyst) -> Функциональные требования (`requirements/functional-requirements.md`).
 - `/nft` (Architect / Analyst по выбору в config) -> Нефункциональные требования (`requirements/non-functional-requirements.md`).
 - `/qc-ft-nft` (Anatomist) -> Проверка функциональных и нефункциональных требований (`reports/incompatibility-ft-nft.md`).
@@ -130,23 +130,23 @@
 - `/gost-3460289` (Tech-Writer) -> Техническое задание по ГОСТ 34.602-89 (`artifacts/tz-gost-<код>.md`; в этом репозитории — `artifacts/tz-gost-34-602.md`).
 - `/diagram-bpmn` (Analyst) -> Диаграммы процессов BPMN. Выполняется при необходимости
 - `/diagram-mermaid` (Analyst) -> Диаграммы Mermaid. Выполняется при необходимости
-- `/release-notes` (Tech-Writer) -> Подготовка релиз-ноутс (`reports/release/`).
+- `/release-notes` (Tech-Writer) -> Подготовка релиз-ноутс (`reports/release/`). **Файла команды нет.**
 
-**5.2. Операционные команды PM (Delivery Loop):**
+**5.2. Операционные команды PM (Delivery Loop) — в этом репозитории файлов команд нет:**
 
 - `/backlog-sync` (PM) -> Снимок бэклога GitHub Issues, Projects и Milestones в `reports/backlog-state.md` (last sync, drift).
 - `/commit-audit [from..to]` (PM) -> Автоматический обход репозитория, `git log` за окно, маппинг коммитов на ФТ/US/UC по ID в commit message. Поиск orphan-коммитов и drift. Результат в `reports/commit-audit/YYYY-MM-DD.md` и обновление `commit refs` в `reports/traceability.md`.
 - `/daily-brief` (PM) -> Агрегирует git за вчера + meeting outcomes + open blockers в файл `reports/daily/YYYY-MM-DD.md`.
 - `/meeting-actions <transcript-path>` (PM) -> Извлечение только action items (assignee, due, ref). Параллельно `/meeting-outcomes` (Analyst) пишет аналитический протокол встречи.
 
-**5.3. Сводные и Сценарные команды:**
+**5.3. Сводные и сценарные команды** (`/qc-stage` развёрнут; остальные имена ниже — шаблон, файлов нет):
 
-- `/full-cycle` (PM) -> Последовательный прогон всех включенных в конфигурацию этапов проектирования силами подчиненных агентов. ПМ сам вызывает нужные роли и проводит их через гейты качества. При отсутствии критических замечаний ПМ формирует сводный отчет качества и запрашивает у пользователя APPROVED сразу на весь пакет документов.
+- `/full-cycle` (PM) — **не развёрнуто.** Не имитировать полный прогон всех документов. Delivery в этом репозитории: `/pm` + один срез `checklist.md`.
 - `/qc-stage` (Anatomist) -> Универсальный второй проход с блокирующим гейтом. ПМ-агент вызывает команду скрыто для валидации артефактов. Анатомист считывает текущий `stage-id` из `reports/pm-state.md`, подгружает нужный чек-лист гейта качества и возвращает структурированный отчет для ПМ.
-- `/feature-from-code` (Architect + Analyst) -> Автоматический обход репозитория под управлением ПМ и восстановление описания поведения, диаграмм Mermaid C4 и data-model для недокументированного кода (Сценарий S2). На время работы команды ограничения манифестов расширяются для чтения папки `src/`.
-- `/feature-add` (PM) -> Анализ фичи, определение изменяемых артефактов, самостоятельное создание связанных дефектов/задач в GitHub Issues с тегами (`epic`, `story`, `task`) через `skill-agent-pm-backlog-management`.
-- `/report-weekly` (Tech-Writer) -> Генерация отчета `weekly-digest-customer-report` для заказчика на основе данных из папок `reports/commit-audit/*` и `reports/daily/*`.
-- `/report-presentation` (Tech-Writer) -> Генерация слайдов и презентаций по работе системы для заказчика.
+- `/feature-from-code` (Architect + Analyst) — **не развёрнуто.**
+- `/feature-add` (PM) — **не развёрнуто.** Срезы кода — `reports/checklist.md` и конвейер `/pm`.
+- `/report-weekly` (Tech-Writer) — **не развёрнуто.**
+- `/report-presentation` (Tech-Writer) — **не развёрнуто.**
 
 ## 6. Сценарии как маршруты в Navigator
 
@@ -156,7 +156,9 @@
 2. **S2 — Фича в недокументированном коде:** Инициализация через `/pm` в минимальной конфигурации -> ПМ запускает `/feature-from-code` для реверс-инжиниринга требований и архитектуры (с временным доступом к чтению `src/`) -> ПМ делает `/commit-audit [last-3-months]` для посева матрицы связей -> ПМ выполняет `/backlog-sync` для фиксации GitHub Issues -> переход к сценарию S3.
 3. **S3 — Фича или изменение в описанном проекте:** Вызов `/feature-add`. PM сам определяет список изменяемых артефактов и отдает их в работу аналитикам и архитекторам, проводя каждый измененный документ через `/qc-stage`. ПМ создает атомарные задачи в GitHub. Далее ПМ запускает конвейер вайбкодинга: бэкендер пишет код среза -> ПМ отдает код тестеру -> после фиксации багов бэкендером ПМ передает срез фронтендеру -> ПМ отдает тестеру на UI-тесты. ПМ рапортует пользователю только о полной готовности всего среза. Перед демонстрацией ПМ через `/commit-audit` проверяет покрытие кода коммитами.
 4. **S4 — Отчётность:** Вызов ПМ-ом команд `/report-weekly` или `/report-presentation`. Факты берутся строго из артефактов PM (коммит-аудиты, дейли-брифы), исключая любые "придуманные" ИИ формулировки.
-5. **S5 — Режим обычного чата:** Прямое, стандартное взаимодействие пользователя с агентами Cursor. Выбор данного режима осуществляется пользователем в любой момент времени, отключая или ставя на паузу жесткую последовательность оркестрации ПМ.
+5. **S5 — Обычный чат (не срез `S-05`):** пользователь вызывает slash-команду напрямую. Оркестрация ПМ на паузе.
+
+В **этом** репозитории канон маршрута — `reports/navigator.md`. Сценарии S2–S4 выше со ссылками на `/feature-from-code`, `/feature-add`, `/commit-audit`, `/report-weekly` — шаблон методологии; команд нет, не имитировать. Фактический S3: `/pm` + срез `reports/checklist.md`.
 
 ## 7. Definition of Done этапа (блокирующий гейт)
 
@@ -237,7 +239,7 @@
 2. Выполнить **`/pm`** (пустой вызов = статус).
 3. ПМ создаёт `reports/project-config.md` и `reports/pm-state.md` из шаблонов, если файлов нет (`skill-agent-pm.md`).
 4. **Заполнить** `reports/project-config.md`: имя продукта, стек, сценарий MAS (**S1** — новый без требований, **S2** — код без требований, **S3** — описанный проект).
-5. Дальше — slash-команды по `reports/navigator.md` и `.cursor/list-commands.md` (`/ft`, `/nft`, `/vision`, …). Пустой `/pm` **не** запускает все роли подряд; нет команды `/full-cycle`.
+5. Дальше — чеклист срезов **этого** продукта (`reports/checklist.md`) и `reports/navigator.md`. Пустой `/pm` не гоняет все документы; конвейер **одного** согласованного среза — обязанность ПМ. Команды `/full-cycle` в этом репозитории нет. Прямые `/ft`, `/frontend` остаются обходом (**сценарий S5**, не срез `S-05`).
 
 ### 10.4. Custom Agents в Cursor
 

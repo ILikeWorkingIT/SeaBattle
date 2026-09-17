@@ -25,7 +25,7 @@ python -m frontend
 
 Контракт: `requirements/openapi.yaml` (OpenAPI 3.0.3). Это спецификация, не работающий бэкенд.
 
-`servers.url` `http://localhost:8000` — будущий FastAPI / Uvicorn. Сейчас этот порт не слушает API: Try it out в Swagger будет с ошибкой соединения.
+`servers.url` `http://localhost:8000` — живой FastAPI / Uvicorn (**не** путать с просмотрщиками YAML на 8080/8081). Try it out в Swagger заработает только если поднят сервис `backend` (Compose, см. ниже). Без сервера будет ошибка соединения — это не дефект контракта.
 
 Просмотр документации (обычный Chrome или Edge, не Simple Browser Cursor):
 
@@ -40,6 +40,18 @@ python -m frontend
 cd e:\Cursor\SeaBattle\requirements
 python preview-openapi.py
 ```
+
+## Как поднять API (Redis + backend)
+
+Канон инфраструктуры: корневой `docker-compose.yml` (сервисы `redis` и `backend` на порту **8000**). Образец переменных — `.env.example` (рабочий `.env` в Git не коммитить).
+
+Агент Cursor **не** поднимает Docker, пока вы явно не разрешили. Запуск — в обычном PowerShell (не терминал агента в чате), из корня репозитория:
+
+```powershell
+docker compose up --build
+```
+
+Остановка: `docker compose down`. Локальный Uvicorn без Compose допустим, если Redis уже доступен; канон — Compose.
 
 ## Входные документы
 
@@ -58,12 +70,14 @@ python preview-openapi.py
 | `diagrams` | текстовые диаграммы (PlantUML / Mermaid / BPMN) | есть | да (текст) | да (текст; картинки и бинарники — нет) |
 | `.cursor/skills` | промпты и инструкции для AI | есть | да | да |
 | `.cursor/rules` | правила для AI | есть | да | да |
-| `.cursor/commands` | команды Cursor (`/pm`, `/ft`, `/openai`, `/frontend`, `/app-layer` и др.) | есть | да | да |
+| `.cursor/commands` | slash-команды Cursor (`/pm`, `/ft`, `/openai`, `/frontend`, `/app-layer` и др.) | есть | да | да |
 | `.cursor/agents` | файлы агентов MAS | есть | да | да |
-| `src` | исходный код MVP, скрипты, настройки (`run-frontend.bat`, пакет `frontend`) | есть | да | да |
-| `reports` | отчёты: `agent-memory.md`, `project-config.md`, `pm-state.md`, `navigator.md`, QC, шаблоны MAS | есть | да | да |
+| `src` | MVP: `frontend/` (PySide6, `run-frontend.bat`), `backend/` (FastAPI+Redis, `main.py`) | есть | да | да |
+| `docker-compose.yml` | Compose MVP: `redis` + `backend` (:8000); поднимать только с разрешения | есть | да | да |
+| `.env.example` | образец несекретных переменных бэкенда; рабочий `.env` не коммитить | есть | да | да |
+| `reports` | отчёты MAS/QC: `agent-memory.md`, `project-config.md`, `pm-state.md`, `navigator.md`, `checklist.md`, шаблоны | есть | да | да |
 | `artifacts` | артефакты вне `requirements` (Vision, ГОСТ) | целевая | да | да |
-| `tests` | автотесты | целевая | да | да |
+| `tests` | автотесты (`test_should_*`), `coverage.md`; прогон — `/use-tests` → `reports/test-run.md` | есть | да | да |
 | `test-data` | зарезервирована; только по прямому заданию разработчика | целевая | да | да |
 | `legacy` | исходники и аналитика другого проекта; только по явной команде + `@` | — | нет | нет |
 | `old-skills` | скиллы из другого проекта; только по явной команде + `@` | — | нет | нет |

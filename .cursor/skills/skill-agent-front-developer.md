@@ -10,5 +10,5 @@ owner: front-developer
 # Скилл агента front-developer
 
 Выполни `.cursor/skills/skill-frontend-developer.md` (команда `/frontend`).
-После правки предложи `/new-tests` и `/use-tests`, не запускай их в этом ходе.
+Тесты в этом ходе не пиши и не гоняй. Рапорт — ПМ (конвейер) или пользователю только при прямом `/frontend` (сценарий S5: тогда можно предложить `/new-tests` / `/use-tests`).
 Не открывай алгоритм `skill-app-layer`.

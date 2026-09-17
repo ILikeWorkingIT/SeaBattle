@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QRect, Qt, Signal
+from PySide6.QtCore import QRect, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import QWidget
 
@@ -24,6 +24,23 @@ class BoardWidget(QWidget):
             [CellView(Mark.UNCHECKED) for _ in range(10)] for _ in range(10)
         ]
         self._hover: tuple[int, int] | None = None
+        self._last_shot_alpha = 160
+        self._pulse_timer = QTimer(self)
+        self._pulse_timer.setInterval(40)
+        self._pulse_timer.timeout.connect(self._on_last_shot_pulse)
+
+    def pulse_last_shot(self) -> None:
+        self._last_shot_alpha = 255
+        if not self._pulse_timer.isActive():
+            self._pulse_timer.start()
+        self.update()
+
+    def _on_last_shot_pulse(self) -> None:
+        self._last_shot_alpha = max(120, self._last_shot_alpha - 14)
+        if self._last_shot_alpha <= 120:
+            self._pulse_timer.stop()
+            self._last_shot_alpha = 160
+        self.update()
 
     def set_title(self, title: str) -> None:
         self.title = title
@@ -146,6 +163,8 @@ class BoardWidget(QWidget):
             painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, glyph)
 
         if view.last_shot:
-            painter.setPen(QPen(QColor(224, 177, 74, 160), 2))
+            gold = QColor(NAVY["gold"])
+            gold.setAlpha(self._last_shot_alpha)
+            painter.setPen(QPen(gold, 2))
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRoundedRect(rect.adjusted(-1, -1, 1, 1), 6, 6)

@@ -28,6 +28,9 @@ QMainWindow, QDialog, QWidget#Root {
     font-family: "Segoe UI", "Inter", sans-serif;
     font-size: 13px;
 }
+QLabel {
+    color: #E8F3F8;
+}
 QMenuBar {
     background: #0B1C28;
     color: #E8F3F8;
@@ -84,6 +87,13 @@ QLabel#Hero {
 }
 QLabel#Lead { color: #8FAABB; font-size: 14px; }
 QLabel#Muted { color: #8FAABB; }
+QLabel#lobby-empty { color: #8FAABB; }
+QLabel#lobby-loading { color: #E0B14A; }
+QLabel#battle-computer-turn { color: #3EC8B0; font-weight: 600; }
+QLabel#lobby-error { color: #E05A5A; }
+QLabel#lobby-stats-empty, QLabel#stats-empty { color: #8FAABB; }
+QLabel#lobby-stats-loading, QLabel#stats-loading { color: #E0B14A; }
+QLabel#lobby-stats-error, QLabel#stats-error { color: #E05A5A; }
 QLabel#CardTitle { color: #8FAABB; font-size: 11px; }
 QLabel#CardValue { font-size: 26px; font-weight: 700; color: #E0B14A; }
 QFrame#Card, QFrame#Panel {
@@ -143,6 +153,8 @@ QTabBar::tab {
     margin-right: 4px;
 }
 QTabBar::tab:selected { background: #102433; color: #E8F3F8; }
+QTabWidget QLabel { color: #E8F3F8; }
+QTabWidget QLabel#Muted { color: #E8F3F8; }
 QLineEdit {
     background: #0B1C28;
     border: 1px solid #24556C;
