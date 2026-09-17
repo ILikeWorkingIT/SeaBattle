@@ -1,0 +1,8 @@
+flowchart TB
+  player(["Person: Игрок"])
+  os["System_Ext: ОС хоста (внешняя)"]
+  subgraph boundary["Boundary: Sea Battle"]
+    system["System: Sea Battle PvE"]
+  end
+  player -->|"ведёт партию в окне"| system
+  os -->|"язык первого запуска RU или EN"| system

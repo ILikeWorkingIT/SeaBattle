@@ -1,0 +1,12 @@
+flowchart TB
+  subgraph host["Node: хост разработчика"]
+    uiProc["процесс python frontend"]
+    subgraph docker["Node: Docker Compose"]
+      be["контейнер backend :8000"]
+      rd[("контейнер redis")]
+    end
+    disk[("том F:/Docker/redis")]
+  end
+  uiProc -->|"localhost:8000"| be
+  be -->|"redis:6379"| rd
+  rd --> disk

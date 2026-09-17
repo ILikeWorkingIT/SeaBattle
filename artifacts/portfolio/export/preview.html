@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8" />
+<title>Sea Battle diagrams</title>
+<script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"; mermaid.initialize({ startOnLoad: true, theme: "neutral" });</script>
+<style>body{font-family:Segoe UI,sans-serif;margin:24px;background:#f6f6f6} h2{margin-top:2rem} pre.mermaid{background:#fff;padding:16px}</style>
+</head><body>
+<p>Локальный просмотр (Chrome). Для слайдов удобнее готовые SVG/PNG рядом с этим файлом.</p>
+<h2>ai-overview</h2>
+<div class="mermaid">
+flowchart TD
+  Start([Старт: ход Бэкенда]) --> B1{Есть раненый корабль Игрока?}
+  B1 -->|нет Hunt| Hunt[Пересчёт весов по оставшимся кораблям]
+  B1 -->|да Target| Target[Сузить область добивания]
+  Hunt --> Pick[Клетка с max весом]
+  Target --> Pick
+  Pick --> B2{Есть клетка с весом больше 0?}
+  B2 -->|нет| B3{Флот Игрока уничтожен?}
+  B3 -->|да| EndGO([GAME_OVER победа Бэкенда])
+  B3 -->|нет| EndAbort([SESSION_ABORTED удалить сессию])
+  B2 -->|да| Fire[Выстрел по полю Игрока]
+  Fire --> B4{Результат?}
+  B4 -->|MISS| EndPlayer([Ход Игрока])
+  B4 -->|HIT или SUNK флот жив| Start
+  B4 -->|SUNK флот уничтожен| EndGO
+
+</div>
+<h2>c4-1</h2>
+<div class="mermaid">
+flowchart TB
+  player(["Person: Игрок"])
+  os["System_Ext: ОС хоста (внешняя)"]
+  subgraph boundary["Boundary: Sea Battle"]
+    system["System: Sea Battle PvE"]
+  end
+  player -->|"ведёт партию в окне"| system
+  os -->|"язык первого запуска RU или EN"| system
+
+</div>
+<h2>c4-2</h2>
+<div class="mermaid">
+flowchart TB
+  player(["Person: Игрок"])
+  subgraph product["Boundary: Sea Battle"]
+    ui["Container: Desktop UI PySide6"]
+    api["Container: Backend API FastAPI"]
+    redis[("Container: Redis 7")]
+  end
+  player -->|"клики, меню языка"| ui
+  ui -->|"HTTP POST sessions GET statistics"| api
+  ui -->|"WS party channel :8000"| api
+  api -->|"JSON TTL SET HASH LIST"| redis
+
+</div>
+<h2>c4-3</h2>
+<div class="mermaid">
+flowchart TB
+  subgraph api["Boundary: Backend API"]
+    httpSess["Component: HTTP sessions"]
+    httpStat["Component: HTTP statistics"]
+    wsParty["Component: WS party hub"]
+    appLayer["Component: application use cases"]
+    domain["Component: domain"]
+    sessStore["Component: Redis session store"]
+    ledgStore["Component: Redis ledger store"]
+  end
+  redis[("Redis")]
+  httpSess --> appLayer
+  httpStat --> appLayer
+  wsParty --> appLayer
+  appLayer --> domain
+  appLayer --> sessStore
+  appLayer --> ledgStore
+  sessStore -->|"session JSON registry SET"| redis
+  ledgStore -->|"HASH LIST recorded SET"| redis
+
+</div>
+<h2>c4-4</h2>
+<div class="mermaid">
+flowchart TB
+  subgraph host["Node: хост разработчика"]
+    uiProc["процесс python frontend"]
+    subgraph docker["Node: Docker Compose"]
+      be["контейнер backend :8000"]
+      rd[("контейнер redis")]
+    end
+    disk[("том F:/Docker/redis")]
+  end
+  uiProc -->|"localhost:8000"| be
+  be -->|"redis:6379"| rd
+  rd --> disk
+
+</div>
+<h2>class-session</h2>
+<div class="mermaid">
+classDiagram
+  direction TB
+  class Session {
+    <<Entity>>
+    +id GameSessionId
+    +status Active_or_GameOver
+    +turn Player_or_Backend
+    +idleTtl 1800s
+    +applyShot()
+    +surrender()
+  }
+  class Board {
+    <<Entity>>
+    +owner Side
+    +cells 10x10
+  }
+  class Fleet {
+    <<Entity>>
+    +owner Side
+    +ships 10
+  }
+  class Ship {
+    <<Entity>>
+    +type length status
+  }
+  class Shot {
+    <<Entity>>
+    +seq shooter result
+  }
+  Session "1" *-- "2" Board : player and backend
+  Session "1" *-- "2" Fleet : player and backend
+  Session "1" *-- "0..*" Shot
+  Fleet "1" *-- "10" Ship
+
+</div>
+<h2>dfd-overview</h2>
+<div class="mermaid">
+flowchart LR
+  player["Игрок"]
+  os["ОС"]
+  system(("Sea Battle PvE"))
+  player -->|"старт выстрел сдача запрос статистики язык"| system
+  system -->|"поля отметки итог KPI подписи UI"| player
+  os -->|"язык первого запуска"| system
+
+</div>
+<h2>redis-keys</h2>
+<div class="mermaid">
+flowchart LR
+  subgraph registry["SET"]
+    slots["seabattle:registry:slots"]
+  end
+  subgraph session["STRING plus EX"]
+    sess["seabattle:session:id"]
+  end
+  subgraph ledger["журнал"]
+    counters["HASH counters"]
+    records["LIST records"]
+    recorded["SET recorded sessionId"]
+  end
+  slots -->|"id активных до 3"| sess
+  sess -->|"GAME_OVER Lua"| recorded
+  recorded --> records
+  recorded --> counters
+
+</div>
+<h2>seq-reconnect</h2>
+<div class="mermaid">
+sequenceDiagram
+  actor Player
+  participant Frontend
+  participant API
+  participant Redis
+  Note over Player: канал оборвался например stop backend в Compose
+  Frontend-->>Player: сервер не ответил
+  Note over Player: start backend когда сервис снова доступен
+  Frontend->>API: WS connect sessionId
+  API->>Redis: GET session JSON
+  Redis-->>API: сессия или пусто
+  alt сессии нет или есть живой второй сокет
+    API-->>Frontend: отказ handshake
+    Frontend-->>Player: сессия недоступна
+  else handshake принят
+    opt был полуоткрытый сокет той же сессии
+      API->>API: закрыть предыдущее соединение
+    end
+    API->>Redis: SAVE JSON без сдвига idle TTL
+    Redis-->>API: OK
+    API-->>Frontend: sessionSnapshot
+    Frontend-->>Player: поля ход и остаток TTL как были
+  end
+
+</div>
+<h2>seq-shot</h2>
+<div class="mermaid">
+sequenceDiagram
+  actor Player
+  participant Frontend
+  participant API
+  participant Redis
+  Player->>Frontend: клик по клетке поля Бэкенда
+  Frontend->>Frontend: проверить что ход игрока и клик не заблокирован
+  Frontend->>API: WS shot coords
+  API->>API: применить выстрел в домене
+  alt выстрел отклонён
+    API-->>Frontend: error
+    Frontend-->>Player: клетка не меняется
+  else выстрел принят
+    API->>Redis: сохранить сессию refresh idle
+    Redis-->>API: OK
+    API-->>Frontend: shotResolved
+    Frontend-->>Player: отметки MISS HIT SUNK
+    alt результат HIT или SUNK и флот Бэкенда жив
+      Note over API: ход остаётся у Игрока
+    else результат MISS
+      loop ход Бэкенда пока Active и turn Backend
+        API->>API: heatmap aim и выстрел по полю Игрока
+        API->>Redis: сохранить сессию
+        Redis-->>API: OK
+        API-->>Frontend: shotResolved shooter Backend
+        Frontend-->>Player: клетка на своём поле
+      end
+    end
+    opt статус GameOver
+      API->>Redis: запись журнала и снять слот
+      Redis-->>API: OK
+      API-->>Frontend: gameOver
+      Frontend-->>Player: диалог итога
+    end
+  end
+
+</div>
+<h2>state-session</h2>
+<div class="mermaid">
+stateDiagram-v2
+  [*] --> ActivePlayer: POST sessions
+  state Active {
+    ActivePlayer: Active ход Игрока
+    ActiveBackend: Active ход Бэкенда
+    ActivePlayer --> ActivePlayer: HIT или SUNK игрока
+    ActivePlayer --> ActiveBackend: MISS игрока
+    ActiveBackend --> ActiveBackend: HIT или SUNK Бэкенда
+    ActiveBackend --> ActivePlayer: MISS Бэкенда
+  }
+  Active --> GameOver: флот или сдача
+  Active --> Deleted: idle TTL или abort heatmap
+  GameOver --> Deleted: слот снят JSON удалён
+  Deleted --> [*]
+
+</div>
+</body></html>

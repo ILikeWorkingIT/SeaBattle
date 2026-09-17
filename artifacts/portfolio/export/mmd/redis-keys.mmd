@@ -1,0 +1,16 @@
+flowchart LR
+  subgraph registry["SET"]
+    slots["seabattle:registry:slots"]
+  end
+  subgraph session["STRING plus EX"]
+    sess["seabattle:session:id"]
+  end
+  subgraph ledger["журнал"]
+    counters["HASH counters"]
+    records["LIST records"]
+    recorded["SET recorded sessionId"]
+  end
+  slots -->|"id активных до 3"| sess
+  sess -->|"GAME_OVER Lua"| recorded
+  recorded --> records
+  recorded --> counters

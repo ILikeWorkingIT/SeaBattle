@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="Definitions_bpmn002"
+  targetNamespace="http://seabattle/bpmn">
+  <bpmn:process id="Process_PartyLifecycle" name="Жизненный цикл партии PvE" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Player" name="Игрок">
+        <bpmn:flowNodeRef>StartEvent_WantGame</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_StartGame</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SeeLimit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Limit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SeeResult</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_GameOver</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Ttl</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Frontend" name="Фронтенд">
+        <bpmn:flowNodeRef>Task_OpenChannel</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Wait</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_Shot</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_Surrender</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_UpdateBoard</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Backend" name="Бэкенд">
+        <bpmn:flowNodeRef>Task_CreateSession</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Slot</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_Ttl</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ApplyShot</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_AfterShot</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_BackendTurn</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_AfterBackend</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ApplySurrender</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CommitOver</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ExpireTtl</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="StartEvent_WantGame" name="Игрок хочет партию">
+      <bpmn:outgoing>Flow_01</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Task_StartGame" name="Начать новую игру">
+      <bpmn:incoming>Flow_01</bpmn:incoming>
+      <bpmn:outgoing>Flow_02</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Task_CreateSession" name="Создать сессию и флоты">
+      <bpmn:incoming>Flow_02</bpmn:incoming>
+      <bpmn:outgoing>Flow_03</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_Slot" name="Слот свободен?" default="Flow_05">
+      <bpmn:incoming>Flow_03</bpmn:incoming>
+      <bpmn:outgoing>Flow_04</bpmn:outgoing>
+      <bpmn:outgoing>Flow_05</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_SeeLimit" name="Показать отказ лимита">
+      <bpmn:incoming>Flow_04</bpmn:incoming>
+      <bpmn:outgoing>Flow_06</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="EndEvent_Limit" name="Партия не создана">
+      <bpmn:incoming>Flow_06</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Task_OpenChannel" name="Открыть канал партии">
+      <bpmn:incoming>Flow_05</bpmn:incoming>
+      <bpmn:outgoing>Flow_07</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:eventBasedGateway id="Gateway_Wait" name="Ждать ход или TTL">
+      <bpmn:incoming>Flow_07</bpmn:incoming>
+      <bpmn:incoming>Flow_18</bpmn:incoming>
+      <bpmn:outgoing>Flow_08</bpmn:outgoing>
+      <bpmn:outgoing>Flow_09</bpmn:outgoing>
+      <bpmn:outgoing>Flow_10</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="Catch_Shot" name="Выстрел игрока">
+      <bpmn:incoming>Flow_08</bpmn:incoming>
+      <bpmn:outgoing>Flow_11</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MsgDef_Shot" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Catch_Surrender" name="Сдача">
+      <bpmn:incoming>Flow_09</bpmn:incoming>
+      <bpmn:outgoing>Flow_12</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MsgDef_Surrender" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Catch_Ttl" name="Idle 30 мин">
+      <bpmn:incoming>Flow_10</bpmn:incoming>
+      <bpmn:outgoing>Flow_13</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerDef_Ttl" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="Task_ApplyShot" name="Применить выстрел игрока">
+      <bpmn:incoming>Flow_11</bpmn:incoming>
+      <bpmn:outgoing>Flow_14</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_AfterShot" name="Исход выстрела?" default="Flow_16">
+      <bpmn:incoming>Flow_14</bpmn:incoming>
+      <bpmn:outgoing>Flow_15</bpmn:outgoing>
+      <bpmn:outgoing>Flow_16</bpmn:outgoing>
+      <bpmn:outgoing>Flow_17</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_UpdateBoard" name="Обновить поля">
+      <bpmn:incoming>Flow_16</bpmn:incoming>
+      <bpmn:incoming>Flow_20</bpmn:incoming>
+      <bpmn:outgoing>Flow_18</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_BackendTurn" name="Ход Бэкенда heatmap">
+      <bpmn:incoming>Flow_17</bpmn:incoming>
+      <bpmn:outgoing>Flow_19</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_AfterBackend" name="После хода Бэкенда?" default="Flow_20">
+      <bpmn:incoming>Flow_19</bpmn:incoming>
+      <bpmn:outgoing>Flow_20</bpmn:outgoing>
+      <bpmn:outgoing>Flow_22</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_ApplySurrender" name="Зафиксировать сдачу">
+      <bpmn:incoming>Flow_12</bpmn:incoming>
+      <bpmn:outgoing>Flow_23</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_CommitOver" name="GAME_OVER и журнал">
+      <bpmn:incoming>Flow_15</bpmn:incoming>
+      <bpmn:incoming>Flow_22</bpmn:incoming>
+      <bpmn:incoming>Flow_23</bpmn:incoming>
+      <bpmn:outgoing>Flow_24</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Task_SeeResult" name="Показать итог">
+      <bpmn:incoming>Flow_24</bpmn:incoming>
+      <bpmn:outgoing>Flow_25</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="EndEvent_GameOver" name="Партия в журнале">
+      <bpmn:incoming>Flow_25</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Task_ExpireTtl" name="ttlExpired удалить сессию">
+      <bpmn:incoming>Flow_13</bpmn:incoming>
+      <bpmn:outgoing>Flow_26</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="EndEvent_Ttl" name="Без GAME_OVER">
+      <bpmn:incoming>Flow_26</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_01" sourceRef="StartEvent_WantGame" targetRef="Task_StartGame" />
+    <bpmn:sequenceFlow id="Flow_02" sourceRef="Task_StartGame" targetRef="Task_CreateSession" />
+    <bpmn:sequenceFlow id="Flow_03" sourceRef="Task_CreateSession" targetRef="Gateway_Slot" />
+    <bpmn:sequenceFlow id="Flow_04" name="нет слота" sourceRef="Gateway_Slot" targetRef="Task_SeeLimit" />
+    <bpmn:sequenceFlow id="Flow_05" name="слот есть" sourceRef="Gateway_Slot" targetRef="Task_OpenChannel" />
+    <bpmn:sequenceFlow id="Flow_06" sourceRef="Task_SeeLimit" targetRef="EndEvent_Limit" />
+    <bpmn:sequenceFlow id="Flow_07" sourceRef="Task_OpenChannel" targetRef="Gateway_Wait" />
+    <bpmn:sequenceFlow id="Flow_08" sourceRef="Gateway_Wait" targetRef="Catch_Shot" />
+    <bpmn:sequenceFlow id="Flow_09" sourceRef="Gateway_Wait" targetRef="Catch_Surrender" />
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Gateway_Wait" targetRef="Catch_Ttl" />
+    <bpmn:sequenceFlow id="Flow_11" sourceRef="Catch_Shot" targetRef="Task_ApplyShot" />
+    <bpmn:sequenceFlow id="Flow_12" sourceRef="Catch_Surrender" targetRef="Task_ApplySurrender" />
+    <bpmn:sequenceFlow id="Flow_13" sourceRef="Catch_Ttl" targetRef="Task_ExpireTtl" />
+    <bpmn:sequenceFlow id="Flow_14" sourceRef="Task_ApplyShot" targetRef="Gateway_AfterShot" />
+    <bpmn:sequenceFlow id="Flow_15" name="флот Бэкенда уничтожен" sourceRef="Gateway_AfterShot" targetRef="Task_CommitOver" />
+    <bpmn:sequenceFlow id="Flow_16" name="HIT или SUNK ход Игрока" sourceRef="Gateway_AfterShot" targetRef="Task_UpdateBoard" />
+    <bpmn:sequenceFlow id="Flow_17" name="MISS" sourceRef="Gateway_AfterShot" targetRef="Task_BackendTurn" />
+    <bpmn:sequenceFlow id="Flow_18" sourceRef="Task_UpdateBoard" targetRef="Gateway_Wait" />
+    <bpmn:sequenceFlow id="Flow_19" sourceRef="Task_BackendTurn" targetRef="Gateway_AfterBackend" />
+    <bpmn:sequenceFlow id="Flow_20" name="партия продолжается" sourceRef="Gateway_AfterBackend" targetRef="Task_UpdateBoard" />
+    <bpmn:sequenceFlow id="Flow_22" name="флот Игрока уничтожен" sourceRef="Gateway_AfterBackend" targetRef="Task_CommitOver" />
+    <bpmn:sequenceFlow id="Flow_23" sourceRef="Task_ApplySurrender" targetRef="Task_CommitOver" />
+    <bpmn:sequenceFlow id="Flow_24" sourceRef="Task_CommitOver" targetRef="Task_SeeResult" />
+    <bpmn:sequenceFlow id="Flow_25" sourceRef="Task_SeeResult" targetRef="EndEvent_GameOver" />
+    <bpmn:sequenceFlow id="Flow_26" sourceRef="Task_ExpireTtl" targetRef="EndEvent_Ttl" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_PartyLifecycle">
+      <bpmndi:BPMNShape id="Lane_Player_di" bpmnElement="Lane_Player" isHorizontal="true">
+        <dc:Bounds x="120" y="80" width="2100" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Frontend_di" bpmnElement="Lane_Frontend" isHorizontal="true">
+        <dc:Bounds x="120" y="240" width="2100" height="180" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Backend_di" bpmnElement="Lane_Backend" isHorizontal="true">
+        <dc:Bounds x="120" y="420" width="2100" height="240" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="StartEvent_WantGame_di" bpmnElement="StartEvent_WantGame">
+        <dc:Bounds x="180" y="142" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_StartGame_di" bpmnElement="Task_StartGame">
+        <dc:Bounds x="250" y="120" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CreateSession_di" bpmnElement="Task_CreateSession">
+        <dc:Bounds x="430" y="490" width="160" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Slot_di" bpmnElement="Gateway_Slot" isMarkerVisible="true">
+        <dc:Bounds x="640" y="505" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SeeLimit_di" bpmnElement="Task_SeeLimit">
+        <dc:Bounds x="740" y="120" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Limit_di" bpmnElement="EndEvent_Limit">
+        <dc:Bounds x="930" y="142" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_OpenChannel_di" bpmnElement="Task_OpenChannel">
+        <dc:Bounds x="740" y="280" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Wait_di" bpmnElement="Gateway_Wait">
+        <dc:Bounds x="960" y="295" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Catch_Shot_di" bpmnElement="Catch_Shot">
+        <dc:Bounds x="1080" y="262" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Catch_Surrender_di" bpmnElement="Catch_Surrender">
+        <dc:Bounds x="1080" y="322" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Catch_Ttl_di" bpmnElement="Catch_Ttl">
+        <dc:Bounds x="1080" y="522" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ApplyShot_di" bpmnElement="Task_ApplyShot">
+        <dc:Bounds x="1160" y="470" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_AfterShot_di" bpmnElement="Gateway_AfterShot" isMarkerVisible="true">
+        <dc:Bounds x="1350" y="485" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_UpdateBoard_di" bpmnElement="Task_UpdateBoard">
+        <dc:Bounds x="1460" y="280" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BackendTurn_di" bpmnElement="Task_BackendTurn">
+        <dc:Bounds x="1460" y="560" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_AfterBackend_di" bpmnElement="Gateway_AfterBackend" isMarkerVisible="true">
+        <dc:Bounds x="1660" y="575" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ApplySurrender_di" bpmnElement="Task_ApplySurrender">
+        <dc:Bounds x="1160" y="560" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CommitOver_di" bpmnElement="Task_CommitOver">
+        <dc:Bounds x="1780" y="490" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SeeResult_di" bpmnElement="Task_SeeResult">
+        <dc:Bounds x="1780" y="120" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_GameOver_di" bpmnElement="EndEvent_GameOver">
+        <dc:Bounds x="1980" y="142" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ExpireTtl_di" bpmnElement="Task_ExpireTtl">
+        <dc:Bounds x="1160" y="400" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Ttl_di" bpmnElement="EndEvent_Ttl">
+        <dc:Bounds x="1360" y="142" width="36" height="36" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="Flow_01_di" bpmnElement="Flow_01">
+        <di:waypoint x="216" y="160" />
+        <di:waypoint x="250" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02_di" bpmnElement="Flow_02">
+        <di:waypoint x="320" y="200" />
+        <di:waypoint x="320" y="530" />
+        <di:waypoint x="430" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03_di" bpmnElement="Flow_03">
+        <di:waypoint x="590" y="530" />
+        <di:waypoint x="640" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04_di" bpmnElement="Flow_04">
+        <di:waypoint x="665" y="505" />
+        <di:waypoint x="665" y="160" />
+        <di:waypoint x="740" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05_di" bpmnElement="Flow_05">
+        <di:waypoint x="665" y="505" />
+        <di:waypoint x="665" y="320" />
+        <di:waypoint x="740" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06_di" bpmnElement="Flow_06">
+        <di:waypoint x="890" y="160" />
+        <di:waypoint x="930" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07_di" bpmnElement="Flow_07">
+        <di:waypoint x="890" y="320" />
+        <di:waypoint x="960" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_08_di" bpmnElement="Flow_08">
+        <di:waypoint x="1010" y="320" />
+        <di:waypoint x="1045" y="320" />
+        <di:waypoint x="1045" y="280" />
+        <di:waypoint x="1080" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09_di" bpmnElement="Flow_09">
+        <di:waypoint x="1010" y="320" />
+        <di:waypoint x="1080" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10_di" bpmnElement="Flow_10">
+        <di:waypoint x="985" y="345" />
+        <di:waypoint x="985" y="540" />
+        <di:waypoint x="1080" y="540" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11_di" bpmnElement="Flow_11">
+        <di:waypoint x="1098" y="298" />
+        <di:waypoint x="1098" y="510" />
+        <di:waypoint x="1160" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12_di" bpmnElement="Flow_12">
+        <di:waypoint x="1098" y="358" />
+        <di:waypoint x="1098" y="600" />
+        <di:waypoint x="1160" y="600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13_di" bpmnElement="Flow_13">
+        <di:waypoint x="1116" y="540" />
+        <di:waypoint x="1160" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14_di" bpmnElement="Flow_14">
+        <di:waypoint x="1310" y="510" />
+        <di:waypoint x="1350" y="510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15_di" bpmnElement="Flow_15">
+        <di:waypoint x="1400" y="510" />
+        <di:waypoint x="1780" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16_di" bpmnElement="Flow_16">
+        <di:waypoint x="1375" y="485" />
+        <di:waypoint x="1375" y="320" />
+        <di:waypoint x="1460" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17_di" bpmnElement="Flow_17">
+        <di:waypoint x="1375" y="535" />
+        <di:waypoint x="1375" y="600" />
+        <di:waypoint x="1460" y="600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18_di" bpmnElement="Flow_18">
+        <di:waypoint x="1460" y="320" />
+        <di:waypoint x="985" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19_di" bpmnElement="Flow_19">
+        <di:waypoint x="1610" y="600" />
+        <di:waypoint x="1660" y="600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_20_di" bpmnElement="Flow_20">
+        <di:waypoint x="1685" y="575" />
+        <di:waypoint x="1685" y="320" />
+        <di:waypoint x="1610" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_22_di" bpmnElement="Flow_22">
+        <di:waypoint x="1710" y="600" />
+        <di:waypoint x="1780" y="550" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_23_di" bpmnElement="Flow_23">
+        <di:waypoint x="1310" y="600" />
+        <di:waypoint x="1780" y="560" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_24_di" bpmnElement="Flow_24">
+        <di:waypoint x="1855" y="490" />
+        <di:waypoint x="1855" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_25_di" bpmnElement="Flow_25">
+        <di:waypoint x="1930" y="160" />
+        <di:waypoint x="1980" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_26_di" bpmnElement="Flow_26">
+        <di:waypoint x="1235" y="400" />
+        <di:waypoint x="1235" y="160" />
+        <di:waypoint x="1360" y="160" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

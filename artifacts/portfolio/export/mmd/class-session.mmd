@@ -1,0 +1,33 @@
+classDiagram
+  direction TB
+  class Session {
+    <<Entity>>
+    +id GameSessionId
+    +status Active_or_GameOver
+    +turn Player_or_Backend
+    +idleTtl 1800s
+    +applyShot()
+    +surrender()
+  }
+  class Board {
+    <<Entity>>
+    +owner Side
+    +cells 10x10
+  }
+  class Fleet {
+    <<Entity>>
+    +owner Side
+    +ships 10
+  }
+  class Ship {
+    <<Entity>>
+    +type length status
+  }
+  class Shot {
+    <<Entity>>
+    +seq shooter result
+  }
+  Session "1" *-- "2" Board : player and backend
+  Session "1" *-- "2" Fleet : player and backend
+  Session "1" *-- "0..*" Shot
+  Fleet "1" *-- "10" Ship

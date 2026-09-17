@@ -1,0 +1,14 @@
+stateDiagram-v2
+  [*] --> ActivePlayer: POST sessions
+  state Active {
+    ActivePlayer: Active ход Игрока
+    ActiveBackend: Active ход Бэкенда
+    ActivePlayer --> ActivePlayer: HIT или SUNK игрока
+    ActivePlayer --> ActiveBackend: MISS игрока
+    ActiveBackend --> ActiveBackend: HIT или SUNK Бэкенда
+    ActiveBackend --> ActivePlayer: MISS Бэкенда
+  }
+  Active --> GameOver: флот или сдача
+  Active --> Deleted: idle TTL или abort heatmap
+  GameOver --> Deleted: слот снят JSON удалён
+  Deleted --> [*]

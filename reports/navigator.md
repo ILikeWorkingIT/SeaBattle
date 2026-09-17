@@ -38,11 +38,12 @@
 
 | Артефакт | Команда | Файл | Когда |
 | --- | --- | --- | --- |
+| Витрина портфолио | — | `artifacts/portfolio/` | Кейс, C4, ADR, демо; не заменяет ФТ/US/UC |
 | Vision & Scope | `/vision` | `artifacts/vision-scope.md` | Режимы «ранний» / «после пакета»; согласование: «согласую Vision» — не путать с «утверждаю» этапа |
-| ТЗ по ГОСТ 34.602-89 | `/gost-3460289` | `artifacts/tz-gost-<код>.md` | После пакета требований рекомендуется; согласование: «согласую ТЗ» |
+| ТЗ по ГОСТ 34.602-89 | `/gost-3460289` | `artifacts/tz-gost-seabattle.md` | После пакета; согласование: «согласую ТЗ» |
 
 Закрытые Q&A — коды `VS` и `TZ` в `requirements/answers-project.md`.
 
 ## Этот репозиторий сейчас
 
-Сценарий **S3**. Продукт — Sea Battle (Python 3.12+, PySide6, FastAPI, Redis, REST + WebSocket). Чеклист срезов — `reports/checklist.md` (этот продукт, не копия чужого MVP). Срезы кода MVP **S-00…S-08** закрыты (2026-09-17). Папки `legacy/`, `old-skills/`, `imports/` — не источник правды без `@`.
+Сценарий **S3**. Продукт — Sea Battle (Python 3.12+, PySide6, FastAPI, Redis, REST + WebSocket). Чеклист срезов — `reports/checklist.md`. Срезы кода MVP **S-00…S-08** закрыты (2026-09-17). Vision и ТЗ ГОСТ — черновики в `artifacts/` до фраз согласования. Папки `legacy/`, `old-skills/`, `imports/` — не источник правды без `@`.

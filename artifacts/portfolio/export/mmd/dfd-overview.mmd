@@ -1,0 +1,7 @@
+flowchart LR
+  player["Игрок"]
+  os["ОС"]
+  system(("Sea Battle PvE"))
+  player -->|"старт выстрел сдача запрос статистики язык"| system
+  system -->|"поля отметки итог KPI подписи UI"| player
+  os -->|"язык первого запуска"| system

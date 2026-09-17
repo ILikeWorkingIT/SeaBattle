@@ -1,0 +1,35 @@
+sequenceDiagram
+  actor Player
+  participant Frontend
+  participant API
+  participant Redis
+  Player->>Frontend: клик по клетке поля Бэкенда
+  Frontend->>Frontend: проверить что ход игрока и клик не заблокирован
+  Frontend->>API: WS shot coords
+  API->>API: применить выстрел в домене
+  alt выстрел отклонён
+    API-->>Frontend: error
+    Frontend-->>Player: клетка не меняется
+  else выстрел принят
+    API->>Redis: сохранить сессию refresh idle
+    Redis-->>API: OK
+    API-->>Frontend: shotResolved
+    Frontend-->>Player: отметки MISS HIT SUNK
+    alt результат HIT или SUNK и флот Бэкенда жив
+      Note over API: ход остаётся у Игрока
+    else результат MISS
+      loop ход Бэкенда пока Active и turn Backend
+        API->>API: heatmap aim и выстрел по полю Игрока
+        API->>Redis: сохранить сессию
+        Redis-->>API: OK
+        API-->>Frontend: shotResolved shooter Backend
+        Frontend-->>Player: клетка на своём поле
+      end
+    end
+    opt статус GameOver
+      API->>Redis: запись журнала и снять слот
+      Redis-->>API: OK
+      API-->>Frontend: gameOver
+      Frontend-->>Player: диалог итога
+    end
+  end

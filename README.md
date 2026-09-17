@@ -1,10 +1,14 @@
 # Sea Battle
 
-Клиент-серверная игра «Морской бой» в режиме игрок против серверного ИИ (PvE). Проект — инженерный полигон: DDD / Clean Architecture, REST + WebSocket, десктоп-клиент и контейнеризированный бэкенд.
+Клиент-серверная игра «Морской бой»: человек против серверного ИИ (PvE). Инженерный полигон: пакет требований, DDD / Clean Architecture, REST + WebSocket, десктоп PySide6, FastAPI + Redis в Docker.
 
-Стек по ТЗ: Python 3.12+, FastAPI, Redis, PySide6, Docker.
+**За 30 секунд:** игрок в окне на хосте; API на `:8000`; живые выстрелы только по WebSocket; Redis держит до трёх сессий с idle TTL 30 минут и глобальную статистику; heatmap на клиент не уходит. MVP без логина, PvP и ручной расстановки.
 
-Мультиагентная оболочка Cursor (MAS): предпочтительный вход — `/pm`. Описание — `documentation/mas-description.md`; стек для агентов — `reports/project-config.md`; команды — `.cursor/list-commands.md`.
+Витрина для скрининга (кейс, C4, ADR, сценарий демо): [artifacts/portfolio/](artifacts/portfolio/). English: [README.en.md](README.en.md).
+
+Стек: Python 3.12+, FastAPI, Redis, PySide6, Docker.
+
+Мультиагентная оболочка Cursor (MAS) — способ разработки, не суть продукта. Вход для агентов: `/pm`. Описание — `documentation/mas-description.md`; стек — `reports/project-config.md`; команды — `.cursor/list-commands.md`.
 
 ## Как открыть окно Фронтенда
 
@@ -55,6 +59,9 @@ docker compose up --build
 
 ## Входные документы
 
+- `artifacts/vision-scope.md` — Vision & Scope (черновик до «согласую Vision»).
+- `artifacts/tz-gost-seabattle.md` — ТЗ по ГОСТ 34.602-89 (черновик до «согласую ТЗ»).
+- `artifacts/portfolio/` — витрина для собеседования (кейс, C4, ADR, сценарий демо).
 - `documentation/specification-sea-battle-v1-1.md` — техническое задание (правила игры, ИИ, стек, языки).
 - `documentation/mas-description.md` — мультиагентная система Cursor (роли, гейты, `/pm`).
 - `documentation/project-structure-v1-1.md` — структура папок и правила именования файлов (синхронизируется с `.cursor/rules/rule-structure.mdc`).
@@ -76,7 +83,7 @@ docker compose up --build
 | `docker-compose.yml` | Compose MVP: `redis` + `backend` (:8000); поднимать только с разрешения | есть | да | да |
 | `.env.example` | образец несекретных переменных бэкенда; рабочий `.env` не коммитить | есть | да | да |
 | `reports` | отчёты MAS/QC: `agent-memory.md`, `project-config.md`, `pm-state.md`, `navigator.md`, `checklist.md`, шаблоны | есть | да | да |
-| `artifacts` | артефакты вне `requirements` (Vision, ГОСТ) | целевая | да | да |
+| `artifacts` | артефакты вне `requirements` (витрина портфолио, Vision, ГОСТ) | есть (`portfolio/`) | да | да |
 | `tests` | автотесты (`test_should_*`), `coverage.md`; прогон — `/use-tests` → `reports/test-run.md` | есть | да | да |
 | `test-data` | зарезервирована; только по прямому заданию разработчика | целевая | да | да |
 | `legacy` | исходники и аналитика другого проекта; только по явной команде + `@` | — | нет | нет |

@@ -1,0 +1,23 @@
+sequenceDiagram
+  actor Player
+  participant Frontend
+  participant API
+  participant Redis
+  Note over Player: канал оборвался например stop backend в Compose
+  Frontend-->>Player: сервер не ответил
+  Note over Player: start backend когда сервис снова доступен
+  Frontend->>API: WS connect sessionId
+  API->>Redis: GET session JSON
+  Redis-->>API: сессия или пусто
+  alt сессии нет или есть живой второй сокет
+    API-->>Frontend: отказ handshake
+    Frontend-->>Player: сессия недоступна
+  else handshake принят
+    opt был полуоткрытый сокет той же сессии
+      API->>API: закрыть предыдущее соединение
+    end
+    API->>Redis: SAVE JSON без сдвига idle TTL
+    Redis-->>API: OK
+    API-->>Frontend: sessionSnapshot
+    Frontend-->>Player: поля ход и остаток TTL как были
+  end

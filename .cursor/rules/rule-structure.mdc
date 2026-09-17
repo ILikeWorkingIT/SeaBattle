@@ -10,7 +10,7 @@ alwaysApply: true
 
 Корневые ориентиры:
 
-* `README.md` — входной документ: как открыть окно фронтенда и документацию API, иерархия источников.
+* `README.md` — входной документ: витрина для скрининга, как открыть окно фронтенда и документацию API, иерархия источников. English: `README.en.md`.
 * `AGENTS.md` — общие инварианты агента и MAS.
 * `.cursor/list-commands.md` — актуальный список команд Cursor, скиллов и агентов. При создании нового скилла, команды или агента ИИ обязан обновить этот файл.
 
@@ -28,7 +28,7 @@ alwaysApply: true
 * `.env.example` — образец несекретных переменных окружения бэкенда (`REDIS_URL`, `HOST`, `PORT`); рабочий `.env` в Git не коммитить.
 * `tests` — автотесты (`test_should_*`), `conftest.py`, карта покрытия `tests/coverage.md`; прогон — `/use-tests` → `reports/test-run.md`.
 * `reports` — отчёты MAS и QC: `agent-memory.md`, `project-config.md`, `pm-state.md`, `navigator.md`, `checklist.md` (срезы кода MVP), `templates/`, `incompatibility-ft-nft.md`, `incompatibility-us-uc.md`, `domain-model-review.md`, `review-report.md`, `test-run.md`; каркас `daily/`, `weekly/`, `commit-audit/`, `release/`.
-* `artifacts` — Vision & Scope, ТЗ по ГОСТ и прочие артефакты вне `requirements`.
+* `artifacts` — артефакты вне `requirements`: витрина портфолио (`artifacts/portfolio/`); Vision & Scope (`artifacts/vision-scope.md`); ТЗ по ГОСТ 34.602-89 (`artifacts/tz-gost-*.md`).
 * `test-data` — зарезервирована на будущее; использовать только по прямому заданию разработчика; целевая папка.
 * `legacy` — исходники и аналитика другого проекта; не в Git; агент работает с ней только по явной команде и прикреплению через `@` (исключено из репозитория и индексации).
 * `old-skills` — скиллы из другого проекта; не в Git; агент работает с ней только по явной команде и прикреплению через `@` (исключено из репозитория и индексации).
@@ -43,7 +43,7 @@ alwaysApply: true
 * **Словарь данных:** `data-dictionary.md` в `requirements/`.
 * **OpenAPI:** `openapi.yaml` в `requirements/`.
 * **Диаграммы:** папка `diagrams/`. Если пользователь задал имя файла — сохранить его (например `diagram-dfd-001.md`, `diagram-class-001.md`). Если имя не задано — `diagram-mermaid-NNN.md`. BPMN 2.0: `bpmn-NNN.bpmn`. Новый предмет моделирования — новый номер; пересоздание той же диаграммы — тот же файл.
-* **Отчёты:** папка `reports/`. Память агента: `agent-memory.md`. Конфиг MAS: `project-config.md`, `pm-state.md`, `navigator.md`. Срезы кода: `checklist.md`. QC ФТ/НФТ: `incompatibility-ft-nft.md`. QC US/UC: `incompatibility-us-uc.md`. Аудит DDD: `domain-model-review.md`. Гейт стадии: `review-report.md`. Прогон тестов: `test-run.md`. Карта покрытия автотестами: `tests/coverage.md`. Шаблоны: `reports/templates/`.
+* **Отчёты:** папка `reports/`. Память агента: `agent-memory.md`. Конфиг MAS: `project-config.md`, `pm-state.md`, `navigator.md`. Срезы кода: `checklist.md`. QC ФТ/НФТ: `incompatibility-ft-nft.md`. QC US/UC: `incompatibility-us-uc.md`. Аудит DDD: `domain-model-review.md`. Гейт стадии: `review-report.md`. Прогон тестов: `test-run.md`. Карта покрытия автотестами: `tests/coverage.md`. Шаблоны: `reports/templates/`. Витрина портфолио: `artifacts/portfolio/`.
 * **Скиллы:** префикс `skill-` + название в lowercase через дефис. Пример: `skill-ft.md`. Маршрутизаторы ролей: `skill-agent-<роль>.md`.
 * **Правила:** префикс `rule-` + название или `role-` + роль. Примеры: `rule-structure.mdc`, `rule-answers-project.mdc`, `rule-python.mdc`, `role-pm.mdc`.
 * **Агенты:** префикс `agent-` + название агента. Пример: `agent-analyst.md`. Файлы — в `.cursor/agents`.
@@ -54,5 +54,5 @@ alwaysApply: true
 ## 3. Ограничения папок и файлов проекта
 
 * legacy, old-skills, imports — строго исключены из Git и из индексации ИИ (`.gitignore`, `.cursorignore`). Агенту запрещено самостоятельно открывать, искать, читать или править эти папки. Разрешено только при одновременном выполнении обоих условий: (1) явная команда разработчика в чате; (2) прикрепление папки или файла из них через `@`. Без `@` или без явной команды — не трогать.
-* diagrams — только текстовые форматы диаграмм (.puml для PlantUML, блоки кода в .md для Mermaid, BPMN 2.0 XML для импорта в bpmn.io). Бинарные файлы и картинки не используются для актуализации, но могут создаваться по запросу разработчика.
+* diagrams — только текстовые форматы диаграмм (.puml для PlantUML, блоки кода в .md для Mermaid, BPMN 2.0 XML для импорта в bpmn.io). Бинарные файлы и картинки не используются для актуализации; экспорт SVG/PNG для слайдов — `artifacts/portfolio/export/` (по задаче витрины).
 * **Markdown и fenced `text`:** в любых `.md` файлах проекта **запрещено** использовать обёртку ` ```text ` … ` ``` ` (и пустой fence ` ``` ` без языка для длинных цитат/шаблонов, если цель — «просто текст»). Причина: в MarkText и похожих редакторах появляется горизонтальная прокрутка, файлы неудобно читать. Пиши обычным markdown-текстом. Допустимы fence с осмысленным языком там, где нужен код/диаграмма (`mermaid`, `puml`, фрагменты исходников и т.п.), но **не** `text`. В User Stories критерии приёмки (Gherkin) — тоже без fence (`Given` / `When` / `Then` обычным текстом).

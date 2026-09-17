@@ -1,0 +1,11 @@
+flowchart TB
+  player(["Person: Игрок"])
+  subgraph product["Boundary: Sea Battle"]
+    ui["Container: Desktop UI PySide6"]
+    api["Container: Backend API FastAPI"]
+    redis[("Container: Redis 7")]
+  end
+  player -->|"клики, меню языка"| ui
+  ui -->|"HTTP POST sessions GET statistics"| api
+  ui -->|"WS party channel :8000"| api
+  api -->|"JSON TTL SET HASH LIST"| redis

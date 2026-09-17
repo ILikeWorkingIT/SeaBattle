@@ -1,0 +1,19 @@
+flowchart TB
+  subgraph api["Boundary: Backend API"]
+    httpSess["Component: HTTP sessions"]
+    httpStat["Component: HTTP statistics"]
+    wsParty["Component: WS party hub"]
+    appLayer["Component: application use cases"]
+    domain["Component: domain"]
+    sessStore["Component: Redis session store"]
+    ledgStore["Component: Redis ledger store"]
+  end
+  redis[("Redis")]
+  httpSess --> appLayer
+  httpStat --> appLayer
+  wsParty --> appLayer
+  appLayer --> domain
+  appLayer --> sessStore
+  appLayer --> ledgStore
+  sessStore -->|"session JSON registry SET"| redis
+  ledgStore -->|"HASH LIST recorded SET"| redis
