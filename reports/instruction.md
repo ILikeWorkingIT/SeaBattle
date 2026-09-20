@@ -63,7 +63,7 @@ git clone --branch v1.0.0 https://github.com/ILikeWorkingIT/SeaBattle.git
 cd SeaBattle
 ```
 
-В корне должны быть `docker-compose.yml` и папка `src/`. Пока репозиторий не публичный, clone требует доступа, который выдаст автор.
+В корне должны быть `docker-compose.yml` и папка `src/`. Репозиторий публичный: отдельный доступ к clone не нужен.
 
 ## 1. Каталог данных Redis на хосте
 
@@ -307,8 +307,6 @@ docker compose logs -f redis
 
 ## Снимок для скрининга
 
-Тег **`v1.0.0`** — MVP в этом виде (ветка `main`). GitHub Release с `.exe` не нужен. Канон запуска: clone → Compose → окно Python.
-
-Пока репозиторий не публичный, clone требует доступа от автора. После открытия: clone → при отсутствии диска `F:` строка `REDIS_DATA_DIR` в `.env` → `docker compose up --build` → PySide6 → `src/run-frontend.bat`.
+Тег **`v1.0.0`** — MVP в этом виде (ветка `main`). GitHub Release с `.exe` не нужен. Канон запуска: clone → при отсутствии диска `F:` строка `REDIS_DATA_DIR` в `.env` → `docker compose up --build` → PySide6 → `src/run-frontend.bat`.
 
 Не нужно: выкладывать `.env`, образы на Docker Hub, облако/HTTPS/логин, Redis на хосте рядом с Compose, Cursor.

@@ -1,98 +1,55 @@
-# Sea Battle
+# Описание проекта:
 
-Клиент-серверная игра «Морской бой»: человек против серверного ИИ (PvE). Инженерный полигон: пакет требований, DDD / Clean Architecture, REST + WebSocket, десктоп PySide6, FastAPI + Redis в Docker.
+Пет-проект **Sea Battle** разработан для демонстрации возможностей AI-assisted разработки в **Cursor** (практика vibe coding, работа с нереляционным хранилищем Redis, контракт OpenAPI).
 
-**За 30 секунд:** игрок в окне на хосте; API на `:8000`; живые выстрелы только по WebSocket; Redis держит до трёх сессий с idle TTL 30 минут и глобальную статистику; heatmap на клиент не уходит. MVP **v1.0.0** (ветка `main`, тег `v1.0.0`) без логина, PvP и ручной расстановки.
+**Стек:** Python 3.12+, окно PySide6 на хосте, FastAPI + Uvicorn, Redis 7, REST + WebSocket, Docker Compose (сервисы `redis` и `backend` на порту 8000), pytest. Матрица вероятностей на клиент не уходит.
 
-Витрина для скрининга (кейс, C4, ADR, сценарий демо): [artifacts/portfolio/](artifacts/portfolio/). English: [README.en.md](README.en.md).
+В Cursor собрана мультиагентная система: роли (PM, аналитик, архитектор, технический писатель, дизайнер, разработчики UI и прикладного слоя, тестировщик, критик качества), скиллы и slash-команды. Описание: [documentation/mas-description.md](documentation/mas-description.md). Список команд: [.cursor/list-commands.md](.cursor/list-commands.md). MAS — способ разработки, не суть продукта. Вход для агентов: `/pm`.
 
-Стек: Python 3.12+, FastAPI, Redis, PySide6, Docker.
+В качестве учебной и продуктовой задачи выбран пошаговый морской бой с серверным ИИ. Это удобный полигон: DDD / Clean Architecture, контракт OpenAPI, лимит трёх независимых сессий, idle TTL 30 минут и reconnect без сброса TTL.
 
-Мультиагентная оболочка Cursor (MAS) — способ разработки, не суть продукта. Вход для агентов: `/pm`. Описание — `documentation/mas-description.md`; стек — `reports/project-config.md`; команды — `.cursor/list-commands.md`.
+Витрина портфолио: [artifacts/portfolio/README.md](artifacts/portfolio/README.md). Лицензия: [MIT](LICENSE).
 
-## Как открыть окно Фронтенда
+![Лобби Sea Battle — PvE](artifacts/screenshot-lobby.png)
 
-Прототип — десктопное окно PySide6. Запуск из чата Cursor окно на рабочий стол не выводит (скрытая сессия).
+Лобби: старт партии, глобальная статистика, состав флота. Соперник на экране подписан «Компьютер».
 
-1. В проводнике откройте `src` и дважды щёлкните `run-frontend.bat`.
-2. Запасной способ — обычный PowerShell (не терминал агента в чате):
+![Партия Sea Battle — поля игрока и Компьютера](artifacts/screenshot-battle.png)
 
-```powershell
-cd e:\Cursor\SeaBattle\src
-$env:PYTHONPATH = "e:\Cursor\SeaBattle\src"
-python -m frontend
-```
+Партия: своё поле с кораблями, поле Компьютера без чужих палуб до попадания; Idle TTL; статусы флота.
 
-Заголовок окна: **Sea Battle — PvE**. Нужны Python 3.12+ и `PySide6` (`pip install -r src/frontend/requirements.txt`).
+## Этапы выполнения проекта:
 
-## Как открыть документацию API
+Работа над проектом выполнялась этапами: границы продукта, требования, диаграммы сценариев, доменная модель, затем маленькие рабочие срезы интерфейса и прикладного слоя, проверка качества и релиз.
 
-Контракт: `requirements/openapi.yaml` (OpenAPI 3.0.3). Это спецификация, не работающий бэкенд.
+1. **Границы продукта.** Зафиксировали, зачем нужен локальный PvE-контур, что входит в MVP и что сознательно снаружи. Предварительное ТЗ: [documentation/specification-sea-battle-v1-1.md](documentation/specification-sea-battle-v1-1.md). Vision & Scope (согласовано 2026-09-20): [artifacts/vision-scope.md](artifacts/vision-scope.md). Техническое задание по ГОСТ 34.602-89 (согласовано 2026-09-20): [artifacts/tz-gost-seabattle.md](artifacts/tz-gost-seabattle.md). Уточнения `Axxxx` и согласованные ФТ/НФТ важнее предварительного ТЗ.
+2. **Требования.** Собрали общий язык и проверяемое поведение: [глоссарий](requirements/glossary.md), [функциональные требования](requirements/functional-requirements.md) (FT-001…FT-080), [нефункциональные требования](requirements/non-functional-requirements.md) (20 НФТ, NFT-001…NFT-020), восемь [user stories](requirements/user-stories/us-registry.md) (US-001…US-008) и восемь [use cases](requirements/use-cases/list-uc.md) (UC-001…UC-008). Закрытые решения по ходу уточнений: [requirements/answers-project.md](requirements/answers-project.md).
+3. **Диаграммы сценариев.** По use cases нарисовали две sequence-диаграммы Mermaid: [выстрел и ход Бэкенда](diagrams/diagram-seq-001.md) (UC-002, UC-003) и [reconnect](diagrams/diagram-seq-002.md) (UC-006). C4, состояния сессии, BPMN и прочие схемы — в `diagrams/` и во [входном файле витрины](artifacts/portfolio/README.md).
+4. **Доменная модель.** Описали игровую сессию как ограниченный контекст: агрегат Session, инварианты флота и хода, heatmap только на сервере, ключи Redis (сессии с TTL и журнал статистики). [Модель DDD](requirements/domain-model.md), [словарь данных](requirements/data-dictionary.md). Стек: [reports/project-config.md](reports/project-config.md). Контракт API: [requirements/openapi.yaml](requirements/openapi.yaml).
+5. **Реализация срезами.** Сначала макет окна (вид и навигация без игровой логики), затем рабочие куски S-00…S-08: каркас Compose, старт сессии, выстрел по WebSocket, ход Бэкенда, GAME_OVER, сдача, reconnect, статистика, язык UI. Чеклист: [reports/checklist.md](reports/checklist.md). UI — `src/frontend/` (PySide6, launcher `src/run-frontend.bat`); прикладной слой — `src/backend/` (`domain/`, `application/`, `infrastructure/`, `presentation/`).
+6. **Проверка качества.** Согласованность пакетов: [ФТ/НФТ](reports/incompatibility-ft-nft.md), [доменная модель](reports/domain-model-review.md). Автотесты pytest по домену, API и клиенту без живого окна (279 passed): [`tests/`](tests/coverage.md), отчёт [reports/test-run.md](reports/test-run.md).
+7. **Релиз MVP 1.0.0.** Снимок на git-теге `v1.0.0` (ветка `main`). Установщика `.exe` нет: ревьюер собирает API из Compose и открывает десктопное окно Python. Запуск на другом компьютере без Cursor: [reports/instruction.md](reports/instruction.md). Подъём и проверка API у разработчика: [reports/instruction-api.md](reports/instruction-api.md).
 
-`servers.url` `http://localhost:8000` — живой FastAPI / Uvicorn (**не** путать с просмотрщиками YAML на 8080/8081). Try it out в Swagger заработает только если поднят сервис `backend` (Compose, см. ниже). Без сервера будет ошибка соединения — это не дефект контракта.
+Структура папок и правила именования: [documentation/project-structure-v1-1.md](documentation/project-structure-v1-1.md).
 
-Просмотр документации (обычный Chrome или Edge, не Simple Browser Cursor):
+## Запуск
 
-- Swagger UI: http://127.0.0.1:8080/
-- ReDoc: http://127.0.0.1:8081/
-
-Если просмотрщики ещё не запущены: в проводнике откройте `requirements` и дважды щёлкните `run-openapi-docs.bat`. Если 8080 или 8081 заняты, скрипт берёт следующие свободные порты и печатает фактические URL в окне консоли.
-
-Запасной способ — обычный PowerShell (не терминал агента в чате):
-
-```powershell
-cd e:\Cursor\SeaBattle\requirements
-python preview-openapi.py
-```
-
-## Как поднять API (Redis + backend)
-
-Канон инфраструктуры: корневой `docker-compose.yml` (сервисы `redis` и `backend` на порту **8000**). Данные Redis на хосте по умолчанию — `F:/Docker/Redis`; другой диск или папка — `REDIS_DATA_DIR` в `.env` (образец `.env.example`, рабочий `.env` в Git не коммитить).
-
-Агент Cursor **не** поднимает Docker, пока вы явно не разрешили. Запуск — в обычном PowerShell (не терминал агента в чате), из корня репозитория:
+API (из корня репозитория, на своей машине — не из терминала агента Cursor):
 
 ```powershell
 docker compose up --build
 ```
 
-Остановка: `docker compose down`. Локальный Uvicorn без Compose допустим, если Redis уже доступен; канон — Compose.
+Файлы Redis на хосте по умолчанию — `F:/Docker/Redis`. Другой диск или папка: `REDIS_DATA_DIR` в `.env` (образец `.env.example`).
 
-Подробный запуск на **другом компьютере без Cursor** (что поставить, какие контейнеры, проверка API, окно игры): [result/instruction.md](result/instruction.md).
+Окно игры: дважды щёлкните `src/run-frontend.bat` или:
 
-## Входные документы
+```powershell
+cd src
+$env:PYTHONPATH = (Get-Location).Path
+python -m frontend
+```
 
-- `artifacts/vision-scope.md` — Vision & Scope (черновик до «согласую Vision»).
-- `artifacts/tz-gost-seabattle.md` — ТЗ по ГОСТ 34.602-89 (черновик до «согласую ТЗ»).
-- `artifacts/portfolio/` — витрина для собеседования (кейс, C4, ADR, сценарий демо).
-- `documentation/specification-sea-battle-v1-1.md` — техническое задание (правила игры, ИИ, стек, языки).
-- `documentation/mas-description.md` — мультиагентная система Cursor (роли, гейты, `/pm`).
-- `documentation/project-structure-v1-1.md` — структура папок и правила именования файлов (синхронизируется с `.cursor/rules/rule-structure.mdc`).
+Контракт OpenAPI: `requirements/openapi.yaml`. Просмотр Swagger/ReDoc: `requirements/run-openapi-docs.bat` (порты 8080/8081). Try it out работает, только если поднят Compose-бэкенд на 8000.
 
-**Иерархия источников:** предварительное ТЗ — в `documentation/`; уточнения — в `requirements/answers-project.md` (`Axxxx`) и согласованных ФТ/НФТ. При конфликте с предварительным ТЗ приоритет у `Axxxx` и согласованных требований. Поведение агента — в `AGENTS.md`; память проекта — в `reports/agent-memory.md`.
-
-## Структура папок
-
-| Папка / файл | Назначение | Статус | Коммит / репозиторий | Индексация ИИ |
-| --- | --- | --- | --- | --- |
-| `documentation` | ТЗ, MAS, материалы разработчика | есть | да | да |
-| `requirements` | `functional-requirements.md`, `non-functional-requirements.md`, `answers-project.md` (`Axxxx`), `glossary.md`, `domain-model.md`, `data-dictionary.md`, `openapi.yaml`; `user-stories/`, `use-cases/`; `run-openapi-docs.bat`, `preview-openapi.py` | есть | да | да |
-| `diagrams` | текстовые диаграммы (PlantUML / Mermaid / BPMN) | есть | да (текст) | да (текст; картинки и бинарники — нет) |
-| `.cursor/skills` | промпты и инструкции для AI | есть | да | да |
-| `.cursor/rules` | правила для AI | есть | да | да |
-| `.cursor/commands` | slash-команды Cursor (`/pm`, `/ft`, `/openai`, `/frontend`, `/app-layer` и др.) | есть | да | да |
-| `.cursor/agents` | файлы агентов MAS | есть | да | да |
-| `src` | MVP: `frontend/` (PySide6, `run-frontend.bat`), `backend/` (FastAPI+Redis, `main.py`) | есть | да | да |
-| `docker-compose.yml` | Compose MVP: `redis` + `backend` (:8000); поднимать только с разрешения | есть | да | да |
-| `.env.example` | образец несекретных переменных (`REDIS_URL`, `HOST`, `PORT`, `REDIS_DATA_DIR`); рабочий `.env` не коммитить | есть | да | да |
-| `reports` | отчёты MAS/QC: `agent-memory.md`, `project-config.md`, `pm-state.md`, `navigator.md`, `checklist.md`, шаблоны | есть | да | да |
-| `artifacts` | артефакты вне `requirements` (витрина портфолио, Vision, ГОСТ) | есть (`portfolio/`) | да | да |
-| `result` | инструкция внешнего запуска без Cursor (`instruction.md`) | есть | да | да |
-| `tests` | автотесты (`test_should_*`), `coverage.md`; прогон — `/use-tests` → `reports/test-run.md` | есть | да | да |
-| `test-data` | зарезервирована; только по прямому заданию разработчика | целевая | да | да |
-| `legacy` | исходники и аналитика другого проекта; только по явной команде + `@` | — | нет | нет |
-| `old-skills` | скиллы из другого проекта; только по явной команде + `@` | — | нет | нет |
-| `imports` | копия чужого репозитория для переноса методологии; только по явной команде + `@` | — | нет | нет |
-
-Корневые ориентиры: `AGENTS.md` (правила агента и MAS), `.cursor/list-commands.md` (список команд, скиллов и агентов).
-
-`legacy/`, `old-skills/` и `imports/` исключены в `.gitignore` и `.cursorignore`. Агент работает с ними только при явной команде и прикреплении через `@`.
+Полный сценарий «клон на другом ПК, без Cursor»: [reports/instruction.md](reports/instruction.md). Подъём API у разработчика: [reports/instruction-api.md](reports/instruction-api.md).

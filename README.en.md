@@ -34,7 +34,7 @@ python -m frontend
 
 OpenAPI YAML: `requirements/openapi.yaml`. Swagger preview script: `requirements/run-openapi-docs.bat` (ports 8080/8081). Live Try it out needs the Compose backend on 8000.
 
-Full “clone on another PC, no Cursor” walkthrough (Russian): [result/instruction.md](result/instruction.md).
+Full “clone on another PC, no Cursor” walkthrough (Russian): [reports/instruction.md](reports/instruction.md). License: [MIT](LICENSE).
 
 ## Requirements pack
 

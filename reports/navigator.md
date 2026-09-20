@@ -19,6 +19,7 @@
 | Срезы кода MVP | `reports/checklist.md` |
 | След требований → код / коммиты | `reports/traceability.md` (создавать по шаблону, не выдумывать commit ref) |
 | Команды и скиллы | `.cursor/list-commands.md` |
+| Перенос MAS в другой проект | `reports/instructions-copying.md` |
 | Закрытые ответы | `requirements/answers-project.md` |
 | Контракт API | `requirements/openapi.yaml` |
 | Макет клиента | `src/frontend/` (`src/run-frontend.bat`) |

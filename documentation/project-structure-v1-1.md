@@ -4,9 +4,13 @@
 
 Корневые ориентиры:
 
-* `README.md` — входной документ: витрина для скрининга, как открыть окно фронтенда и документацию API, иерархия источников. English: `README.en.md`.
+* `README.md` — входной документ: витрина для скрининга, этапы проекта, короткий блок запуска. English: `README.en.md`. Запуск окна и API на чужой машине — `reports/instruction.md`, `reports/instruction-api.md`.
+* `LICENSE` — MIT.
 * `AGENTS.md` — общие инварианты агента и MAS.
 * `.cursor/list-commands.md` — актуальный список команд Cursor, скиллов и агентов. При создании нового скилла, команды или агента ИИ обязан обновить этот файл.
+* `pytest.ini` — конфиг pytest (`pythonpath = src`, `testpaths = tests`).
+* `Запуск Redis+backend.bat` — Windows: `docker compose up --build` из корня.
+* `Сбросить только партии.bat` — Windows: очистить слоты и ключи сессий в Redis без сноса контейнеров.
 
 Папки и рабочие файлы:
 
@@ -17,13 +21,12 @@
 * `.cursor/rules` — правила для AI (`rule-*`, `role-*`).
 * `.cursor/commands` — команды Cursor (`/pm`, `/ft`, `/nft`, `/us`, `/uc`, `/qc-ft-nft`, `/qc-us-uc`, `/qc-ddd`, `/qc-stage`, `/diagram-bpmn`, `/diagram-mermaid`, `/ddd`, `/data-dictionary`, `/ui-prototyping`, `/frontend`, `/app-layer`, `/openai`, `/new-tests`, `/use-tests`, `/vision`, `/gost-3460289`, `/pin-memory` и др.).
 * `.cursor/agents` — Custom Agents MAS (`agent-pm`, `agent-analyst`, …).
-* `src` — исходный код MVP: прототип фронтенда PySide6 (`src/frontend/`: `ui/`, `mock/`, `client/` HTTP и WebSocket к API; launcher `src/run-frontend.bat`); бэкенд FastAPI+Redis (`src/backend/`: `domain/`, `application/`, `infrastructure/`, `presentation/`, `Dockerfile`, `requirements.txt`; точка входа `main.py`).
+* `src` — исходный код MVP: прототип фронтенда PySide6 (`src/frontend/`: `ui/`, `mock/`, `client/` HTTP и WebSocket к API, `domain/`; `requirements.txt`; launcher `src/run-frontend.bat`); бэкенд FastAPI+Redis (`src/backend/`: `domain/`, `application/`, `infrastructure/`, `presentation/`, `Dockerfile`, `requirements.txt`; точка входа `main.py`).
 * `docker-compose.yml` — корневой Compose MVP: сервисы `redis` + `backend` (:8000); поднимать только с разрешения пользователя.
 * `.env.example` — образец несекретных переменных (`REDIS_URL`, `HOST`, `PORT`, `REDIS_DATA_DIR`); рабочий `.env` не коммитить.
 * `tests` — автотесты (`test_should_*`), `conftest.py`, карта покрытия `tests/coverage.md`; прогон — `/use-tests` → `reports/test-run.md`.
-* `reports` — отчёты MAS и QC: `agent-memory.md`, `project-config.md`, `pm-state.md`, `navigator.md`, `checklist.md` (срезы кода MVP), `templates/`, `incompatibility-ft-nft.md`, `incompatibility-us-uc.md`, `domain-model-review.md`, `review-report.md`, `test-run.md`; каркас `daily/`, `weekly/`, `commit-audit/`, `release/`.
-* `artifacts` — артефакты вне `requirements`: витрина портфолио (`artifacts/portfolio/`); Vision & Scope (`artifacts/vision-scope.md`); ТЗ по ГОСТ 34.602-89 (`artifacts/tz-gost-*.md`).
-* `result` — материалы для внешнего запуска и скрининга без Cursor (`instruction.md`: Docker + окно PySide6 на чужой машине).
+* `reports` — отчёты MAS и QC: `agent-memory.md`, `project-config.md`, `pm-state.md`, `navigator.md`, `checklist.md` (срезы кода MVP), `templates/`, `incompatibility-ft-nft.md`, `incompatibility-us-uc.md`, `domain-model-review.md`, `review-report.md`, `test-run.md`, `instruction.md` (запуск на чужой машине без Cursor), `instruction-api.md` (подъём и проверка API), `instructions-copying.md` (перенос MAS в другой проект); каркас `daily/`, `weekly/`, `commit-audit/`, `release/`.
+* `artifacts` — артефакты вне `requirements`: витрина портфолио (`artifacts/portfolio/`); Vision & Scope (`artifacts/vision-scope.md`); ТЗ по ГОСТ 34.602-89 (`artifacts/tz-gost-*.md`); скриншоты окна для README (`screenshot-lobby.png`, `screenshot-battle.png`).
 * `test-data` — зарезервирована на будущее; использовать только по прямому заданию разработчика; целевая папка.
 * `legacy` — исходники и аналитика другого проекта; не в Git; агент работает с ней только по явной команде и прикреплению через `@` (исключено из репозитория и индексации).
 * `old-skills` — скиллы из другого проекта; не в Git; агент работает с ней только по явной команде и прикреплению через `@` (исключено из репозитория и индексации).
@@ -38,7 +41,7 @@
 * **Словарь данных:** `data-dictionary.md` в `requirements/`.
 * **OpenAPI:** `openapi.yaml` в `requirements/`.
 * **Диаграммы:** папка `diagrams/`. Если пользователь задал имя файла — сохранить его (например `diagram-dfd-001.md`, `diagram-class-001.md`). Если имя не задано — `diagram-mermaid-NNN.md`. BPMN 2.0: `bpmn-NNN.bpmn`. Новый предмет моделирования — новый номер; пересоздание той же диаграммы — тот же файл.
-* **Отчёты:** папка `reports/`. Память агента: `agent-memory.md`. Конфиг MAS: `project-config.md`, `pm-state.md`, `navigator.md`. Срезы кода: `checklist.md`. QC ФТ/НФТ: `incompatibility-ft-nft.md`. QC US/UC: `incompatibility-us-uc.md`. Аудит DDD: `domain-model-review.md`. Гейт стадии: `review-report.md`. Прогон тестов: `test-run.md`. Карта покрытия автотестами: `tests/coverage.md`. Шаблоны: `reports/templates/`. Витрина портфолио: `artifacts/portfolio/`.
+* **Отчёты:** папка `reports/`. Память агента: `agent-memory.md`. Конфиг MAS: `project-config.md`, `pm-state.md`, `navigator.md`. Срезы кода: `checklist.md`. QC ФТ/НФТ: `incompatibility-ft-nft.md`. QC US/UC: `incompatibility-us-uc.md`. Аудит DDD: `domain-model-review.md`. Гейт стадии: `review-report.md`. Прогон тестов: `test-run.md`. Запуск без Cursor: `instruction.md`. Подъём и проверка API: `instruction-api.md`. Перенос MAS в другой проект: `instructions-copying.md`. Карта покрытия автотестами: `tests/coverage.md`. Шаблоны: `reports/templates/`. Витрина портфолио: `artifacts/portfolio/`.
 * **Скиллы:** префикс `skill-` + название в lowercase через дефис. Пример: `skill-ft.md`. Маршрутизаторы ролей: `skill-agent-<роль>.md`.
 * **Правила:** префикс `rule-` + название или `role-` + роль. Примеры: `rule-structure.mdc`, `rule-answers-project.mdc`, `rule-python.mdc`, `role-pm.mdc`.
 * **Агенты:** префикс `agent-` + название агента. Пример: `agent-analyst.md`. Файлы — в `.cursor/agents`.
