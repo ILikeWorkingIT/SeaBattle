@@ -5,7 +5,7 @@
 Корневые ориентиры:
 
 * `README.md` — входной документ: витрина для скрининга, этапы проекта, короткий блок запуска. English: `README.en.md`. Запуск окна и API на чужой машине — `reports/instruction.md`, `reports/instruction-api.md`.
-* `LICENSE` — MIT.
+* `LICENSE` — просмотр файлов и локальный запуск; изменение кода запрещено.
 * `AGENTS.md` — общие инварианты агента и MAS.
 * `.cursor/list-commands.md` — актуальный список команд Cursor, скиллов и агентов. При создании нового скилла, команды или агента ИИ обязан обновить этот файл.
 * `pytest.ini` — конфиг pytest (`pythonpath = src`, `testpaths = tests`).

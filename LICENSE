@@ -1,21 +1,67 @@
-MIT License
+Sea Battle — лицензия на просмотр и локальный запуск
+Copyright (c) 2026 ILikeWorkingIT. Все права сохранены.
 
-Copyright (c) 2026 ILikeWorkingIT
+Настоящая лицензия — не MIT и не свободная (open source) лицензия.
+Права, которые прямо не выданы ниже, остаются у правообладателя.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Разрешено
+   a) просматривать файлы этого репозитория (исходный код, документацию
+      и прочие материалы) в том виде, в каком они опубликованы;
+   b) получить копию (clone) исключительно для личного просмотра и для
+      запуска программы на своём компьютере;
+   c) запускать программу на своём компьютере для личного
+      некоммерческого ознакомления.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+2. Запрещено
+   a) изменять код, документацию и любые другие файлы репозитория;
+   b) создавать производные работы, форки для разработки, патчи
+      и переводы исходников для распространения;
+   c) копировать, публиковать, передавать третьим лицам, продавать,
+      сублицензировать или иначе распространять материалы репозитория
+      (кроме личного clone по пункту 1b);
+   d) использовать материалы в коммерческих целях
+      и во встраивании в другие продукты или сервисы.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+3. Исключение для правообладателя
+   Автор может свободно использовать, копировать и менять эти материалы
+   в своих других проектах. Это не лицензия третьим лицам.
+
+4. Отказ от гарантий
+   Материалы предоставляются «как есть», без гарантий любого рода.
+   Правообладатель не несёт ответственности за убытки, возникшие
+   из просмотра, запуска или невозможности запуска программы.
+
+---
+
+Sea Battle — View and Run License
+Copyright (c) 2026 ILikeWorkingIT. All rights reserved.
+
+This is not an MIT license and not an open-source license.
+Rights not expressly granted below remain with the copyright holder.
+
+1. You may
+   a) view the files of this repository (source, documentation, and
+      other materials) as published;
+   b) obtain a copy (clone) solely for personal viewing and for running
+      the program on your own computer;
+   c) run the program on your own computer for personal, non-commercial
+      review.
+
+2. You may not
+   a) modify the code, documentation, or any other repository files;
+   b) create derivative works, development forks, patches, or source
+      translations for distribution;
+   c) copy, publish, transfer to third parties, sell, sublicense, or
+      otherwise distribute repository materials (except a personal clone
+      under 1b);
+   d) use the materials commercially or embed them in other products
+      or services.
+
+3. Copyright holder
+   The author may freely use, copy, and change these materials in their
+   own other projects. That is not a license to third parties.
+
+4. No warranty
+   The materials are provided “as is”, without warranty of any kind.
+   The copyright holder is not liable for damages arising from viewing,
+   running, or being unable to run the program.

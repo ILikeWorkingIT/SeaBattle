@@ -8,7 +8,7 @@
 
 В качестве учебной и продуктовой задачи выбран пошаговый морской бой с серверным ИИ. Это удобный полигон: DDD / Clean Architecture, контракт OpenAPI, лимит трёх независимых сессий, idle TTL 30 минут и reconnect без сброса TTL.
 
-Витрина портфолио: [artifacts/portfolio/README.md](artifacts/portfolio/README.md). Лицензия: [MIT](LICENSE).
+Витрина портфолио: [artifacts/portfolio/README.md](artifacts/portfolio/README.md). Лицензия: [просмотр файлов и запуск на своём компьютере, без изменения кода](LICENSE).
 
 ![Лобби Sea Battle — PvE](artifacts/screenshot-lobby.png)
 
