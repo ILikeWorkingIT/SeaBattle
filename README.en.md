@@ -2,7 +2,7 @@
 
 Desktop PvE Battleship: a human player vs a server-side heatmap bot. Engineering sample of DDD / Clean Architecture, REST + WebSocket, PySide6 client, FastAPI + Redis, Docker Compose.
 
-**Not a production SaaS.** No login, no PvP, no manual ship placement.
+**Not a production SaaS.** No login, no PvP, no manual ship placement. Frozen MVP: git tag **v1.0.0** (branch `main`).
 
 ## Stack
 
@@ -22,6 +22,8 @@ API (from repo root, your machine — not the Cursor agent terminal):
 docker compose up --build
 ```
 
+Redis files default to `F:/Docker/Redis` on the host. Another disk or folder: set `REDIS_DATA_DIR` in `.env` (see `.env.example`).
+
 Desktop window: double-click `src/run-frontend.bat`, or:
 
 ```powershell
@@ -31,6 +33,8 @@ python -m frontend
 ```
 
 OpenAPI YAML: `requirements/openapi.yaml`. Swagger preview script: `requirements/run-openapi-docs.bat` (ports 8080/8081). Live Try it out needs the Compose backend on 8000.
+
+Full “clone on another PC, no Cursor” walkthrough (Russian): [result/instruction.md](result/instruction.md).
 
 ## Requirements pack
 

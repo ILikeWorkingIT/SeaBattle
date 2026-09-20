@@ -23,7 +23,7 @@
 | СУБД / NoSQL | Redis (сессии матчей, счётчики аналитики; не SQL) | ТЗ §2.2 |
 | Тесты | pytest, pytest-asyncio, ruff, mypy (по ТЗ) | ТЗ §2.1 |
 | Зависимости | `src/frontend/requirements.txt` (клиент); `src/backend/requirements.txt` (сервер); Compose — `docker-compose.yml` | факт репозитория |
-| Конфиг процесса | `.env.example` → локальный `.env` (`REDIS_URL`, `HOST`, `PORT`) | ТЗ §2.4 |
+| Конфиг процесса | `.env.example` → локальный `.env` (`REDIS_URL`, `HOST`, `PORT`, `REDIS_DATA_DIR`) | ТЗ §2.4 |
 
 ## Интеграции
 
@@ -31,7 +31,7 @@
 | --- | --- | --- |
 | OpenAPI preview | Swagger `:8080`, ReDoc `:8081` (`requirements/run-openapi-docs.bat`) | README |
 | Будущий API | `http://localhost:8000` (каркас есть; игровые пути — следующие срезы `/app-layer`) | `openapi.yaml`, README |
-| Redis | in-memory сессии с TTL; Compose: bind `F:/Docker/redis/` → `/data` | ТЗ §2.2, §2.4; agent-memory 2026-09-16 |
+| Redis | in-memory сессии с TTL; Compose: bind `${REDIS_DATA_DIR:-F:/Docker/Redis}` → `/data` | ТЗ §2.2, §2.4; `.env.example` |
 
 ## Владельцы артефактов
 

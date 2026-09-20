@@ -1,13 +1,18 @@
 # Sea Battle MVP: Redis + FastAPI backend (ТЗ §2.4).
 # Do not start without the user's permission. Example: docker compose up --build
-# Redis data on host: F:/Docker/redis/ (agent-memory / skill-app-layer §5.2).
+#
+# Redis files on the host (bind mount → container /data).
+# Recommended default: F:/Docker/Redis
+# Another disk or folder: set REDIS_DATA_DIR in `.env` (see .env.example)
+# or in the shell, then: docker compose up --build
+# Do not put %CD%, %~dp0, $(pwd) or similar into this file.
 
 services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
     volumes:
-      - F:/Docker/redis/:/data
+      - ${REDIS_DATA_DIR:-F:/Docker/Redis}:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s

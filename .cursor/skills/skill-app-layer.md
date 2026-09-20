@@ -96,7 +96,7 @@ src/backend/
   __init__.py          # пакет
   main.py              # FastAPI app + lifespan (подключение Redis)
 src/backend/requirements.txt
-.env.example           # только несекретные ключи (REDIS_URL, HOST, PORT)
+.env.example           # несекретные ключи: REDIS_URL, HOST, PORT, REDIS_DATA_DIR
 docker-compose.yml     # сервисы: redis + backend (см. §5.2)
 ```
 
@@ -108,7 +108,7 @@ docker-compose.yml     # сервисы: redis + backend (см. §5.2)
 - Redis — внутренний хост для backend; с хоста наружу пробрасывать порт Redis только если нужно для отладки (по умолчанию можно не экспонировать).
 - Backend зависит от healthy Redis; idle TTL сессий — ответственность приложения/ключей Redis (30 мин по `A0022`), не «магия» Compose.
 - Не ставь GUI / PySide6 в образ backend.
-- **Данные на хосте (тома / установки «в Docker»):** корень — `F:\Docker\<имя>` (пример: `F:\Docker\ollama`). В `docker-compose.yml` для bind mount указывай **прямой** путь в стиле Docker Desktop: `F:/Docker/ollama/` (или нужный подкаталог). Для Redis Sea Battle: `F:/Docker/redis/` → `/data`. Запрещено: `%CD%`, `%~dp0`, `$(pwd)`, относительные пути «от места запуска» и прочие DOS/shell-трюки для выяснения каталога. Источник: `reports/agent-memory.md` (2026-09-16).
+- **Данные на хосте (тома / установки «в Docker»):** корень на машине автора — `F:\Docker\<имя>` (пример: `F:\Docker\ollama`). В YAML не хардкодь чужой диск: для Redis — `${REDIS_DATA_DIR:-F:/Docker/Redis}` → `/data`. Рекомендуемый путь — `F:/Docker/Redis`; другой диск или папка — переменная `REDIS_DATA_DIR` в `.env` (см. `.env.example`). В сам `docker-compose.yml` запрещено: `%CD%`, `%~dp0`, `$(pwd)` и прочие DOS/shell-трюки для выяснения каталога. Источник: `reports/agent-memory.md` (2026-09-16); уточнение — чат 2026-09-20.
 - Запуск контейнеров — **только с разрешения пользователя** (см. MAS / `AGENTS.md`). В отчёте хода напиши команды `docker compose up`, но не поднимай Docker сам, пока пользователь не разрешил.
 
 Локальный запуск без Docker (для разработки) тоже опиши в ответе: `uvicorn` + внешний Redis, если пользователь так предпочёл; канон инфраструктуры — Compose.

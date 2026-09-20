@@ -24,6 +24,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Redis host bind when REDIS_DATA_DIR=./data/redis (do not commit dump.rdb)
+/data/
+
 # Не в Git: legacy / old-skills / imports (Источник: documentation/project-structure-v1-1.md, раздел 3)
 # Доступ агента — только по явной команде + @ в чате (см. .cursorignore и AGENTS.md).
 /legacy/

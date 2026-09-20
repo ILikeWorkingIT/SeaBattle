@@ -2,7 +2,7 @@
 
 Клиент-серверная игра «Морской бой»: человек против серверного ИИ (PvE). Инженерный полигон: пакет требований, DDD / Clean Architecture, REST + WebSocket, десктоп PySide6, FastAPI + Redis в Docker.
 
-**За 30 секунд:** игрок в окне на хосте; API на `:8000`; живые выстрелы только по WebSocket; Redis держит до трёх сессий с idle TTL 30 минут и глобальную статистику; heatmap на клиент не уходит. MVP без логина, PvP и ручной расстановки.
+**За 30 секунд:** игрок в окне на хосте; API на `:8000`; живые выстрелы только по WebSocket; Redis держит до трёх сессий с idle TTL 30 минут и глобальную статистику; heatmap на клиент не уходит. MVP **v1.0.0** (ветка `main`, тег `v1.0.0`) без логина, PvP и ручной расстановки.
 
 Витрина для скрининга (кейс, C4, ADR, сценарий демо): [artifacts/portfolio/](artifacts/portfolio/). English: [README.en.md](README.en.md).
 
@@ -47,7 +47,7 @@ python preview-openapi.py
 
 ## Как поднять API (Redis + backend)
 
-Канон инфраструктуры: корневой `docker-compose.yml` (сервисы `redis` и `backend` на порту **8000**). Образец переменных — `.env.example` (рабочий `.env` в Git не коммитить).
+Канон инфраструктуры: корневой `docker-compose.yml` (сервисы `redis` и `backend` на порту **8000**). Данные Redis на хосте по умолчанию — `F:/Docker/Redis`; другой диск или папка — `REDIS_DATA_DIR` в `.env` (образец `.env.example`, рабочий `.env` в Git не коммитить).
 
 Агент Cursor **не** поднимает Docker, пока вы явно не разрешили. Запуск — в обычном PowerShell (не терминал агента в чате), из корня репозитория:
 
@@ -56,6 +56,8 @@ docker compose up --build
 ```
 
 Остановка: `docker compose down`. Локальный Uvicorn без Compose допустим, если Redis уже доступен; канон — Compose.
+
+Подробный запуск на **другом компьютере без Cursor** (что поставить, какие контейнеры, проверка API, окно игры): [result/instruction.md](result/instruction.md).
 
 ## Входные документы
 
@@ -81,9 +83,10 @@ docker compose up --build
 | `.cursor/agents` | файлы агентов MAS | есть | да | да |
 | `src` | MVP: `frontend/` (PySide6, `run-frontend.bat`), `backend/` (FastAPI+Redis, `main.py`) | есть | да | да |
 | `docker-compose.yml` | Compose MVP: `redis` + `backend` (:8000); поднимать только с разрешения | есть | да | да |
-| `.env.example` | образец несекретных переменных бэкенда; рабочий `.env` не коммитить | есть | да | да |
+| `.env.example` | образец несекретных переменных (`REDIS_URL`, `HOST`, `PORT`, `REDIS_DATA_DIR`); рабочий `.env` не коммитить | есть | да | да |
 | `reports` | отчёты MAS/QC: `agent-memory.md`, `project-config.md`, `pm-state.md`, `navigator.md`, `checklist.md`, шаблоны | есть | да | да |
 | `artifacts` | артефакты вне `requirements` (витрина портфолио, Vision, ГОСТ) | есть (`portfolio/`) | да | да |
+| `result` | инструкция внешнего запуска без Cursor (`instruction.md`) | есть | да | да |
 | `tests` | автотесты (`test_should_*`), `coverage.md`; прогон — `/use-tests` → `reports/test-run.md` | есть | да | да |
 | `test-data` | зарезервирована; только по прямому заданию разработчика | целевая | да | да |
 | `legacy` | исходники и аналитика другого проекта; только по явной команде + `@` | — | нет | нет |

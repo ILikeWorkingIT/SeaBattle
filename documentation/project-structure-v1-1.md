@@ -19,10 +19,11 @@
 * `.cursor/agents` — Custom Agents MAS (`agent-pm`, `agent-analyst`, …).
 * `src` — исходный код MVP: прототип фронтенда PySide6 (`src/frontend/`: `ui/`, `mock/`, `client/` HTTP и WebSocket к API; launcher `src/run-frontend.bat`); бэкенд FastAPI+Redis (`src/backend/`: `domain/`, `application/`, `infrastructure/`, `presentation/`, `Dockerfile`, `requirements.txt`; точка входа `main.py`).
 * `docker-compose.yml` — корневой Compose MVP: сервисы `redis` + `backend` (:8000); поднимать только с разрешения пользователя.
-* `.env.example` — образец несекретных переменных окружения бэкенда (`REDIS_URL`, `HOST`, `PORT`); рабочий `.env` в Git не коммитить.
+* `.env.example` — образец несекретных переменных (`REDIS_URL`, `HOST`, `PORT`, `REDIS_DATA_DIR`); рабочий `.env` не коммитить.
 * `tests` — автотесты (`test_should_*`), `conftest.py`, карта покрытия `tests/coverage.md`; прогон — `/use-tests` → `reports/test-run.md`.
 * `reports` — отчёты MAS и QC: `agent-memory.md`, `project-config.md`, `pm-state.md`, `navigator.md`, `checklist.md` (срезы кода MVP), `templates/`, `incompatibility-ft-nft.md`, `incompatibility-us-uc.md`, `domain-model-review.md`, `review-report.md`, `test-run.md`; каркас `daily/`, `weekly/`, `commit-audit/`, `release/`.
 * `artifacts` — артефакты вне `requirements`: витрина портфолио (`artifacts/portfolio/`); Vision & Scope (`artifacts/vision-scope.md`); ТЗ по ГОСТ 34.602-89 (`artifacts/tz-gost-*.md`).
+* `result` — материалы для внешнего запуска и скрининга без Cursor (`instruction.md`: Docker + окно PySide6 на чужой машине).
 * `test-data` — зарезервирована на будущее; использовать только по прямому заданию разработчика; целевая папка.
 * `legacy` — исходники и аналитика другого проекта; не в Git; агент работает с ней только по явной команде и прикреплению через `@` (исключено из репозитория и индексации).
 * `old-skills` — скиллы из другого проекта; не в Git; агент работает с ней только по явной команде и прикреплению через `@` (исключено из репозитория и индексации).
